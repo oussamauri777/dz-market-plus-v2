@@ -1,0 +1,28 @@
+{
+  "HomePage": {
+    "title": "Bienvenue sur DZ Market Plus",
+    "subtitle": "Le meilleur endroit pour acheter et vendre en Algérie",
+    "heroTitle": "Achetez et vendez en toute confiance",
+    "heroSubtitle": "Le meilleur endroit pour trouver des bonnes affaires en Algérie",
+    "searchPlaceholder": "Que cherchez-vous ?",
+    "searchButton": "Rechercher",
+    "categories": "Catégories"
+  },
+  "Navigation": {
+    "home": "Accueil",
+    "categories": "Catégories",
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "postAd": "Déposer une annonce",
+    "profile": "Mon Profil",
+    "logout": "Déconnexion"
+  },
+  "Common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier"
+  }
+}

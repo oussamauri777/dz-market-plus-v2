@@ -1,0 +1,28 @@
+{
+  "HomePage": {
+    "title": "مرحباً بكم في DZ Market Plus",
+    "subtitle": "أفضل مكان للبيع والشراء في الجزائر",
+    "heroTitle": "اشتري وبيع بكل ثقة",
+    "heroSubtitle": "أفضل مكان للعثور على صفقات جيدة في الجزائر",
+    "searchPlaceholder": "عن ماذا تبحث؟",
+    "searchButton": "بحث",
+    "categories": "التصنيفات"
+  },
+  "Navigation": {
+    "home": "الرئيسية",
+    "categories": "التصنيفات",
+    "login": "دخول",
+    "register": "تسجيل",
+    "postAd": "إضافة إعلان",
+    "profile": "ملفي الشخصي",
+    "logout": "خروج"
+  },
+  "Common": {
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ ما",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل"
+  }
+}

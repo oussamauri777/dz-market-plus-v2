@@ -6,6 +6,12 @@ import { useTranslations } from 'next-intl';
 import { CldUploadWidget } from 'next-cloudinary';
 import { Camera, MapPin, Tag, Type, FileText, DollarSign, X, UploadCloud } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+    ssr: false,
+    loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">Loading Map...</div>
+});
 
 const WILAYAS = [
     "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra", "Béchar",
@@ -33,6 +39,7 @@ export default function CreateAdPage() {
         category: '',
         wilaya: '',
         images: [] as string[],
+        location: null as any,
     });
     const [loading, setLoading] = useState(false);
 
@@ -219,6 +226,18 @@ export default function CreateAdPage() {
                                         onChange={(e) => setData({ ...data, description: e.target.value })}
                                     />
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Location Section */}
+                        <div>
+                            <label className="block text-sm font-bold text-gray-900 mb-2">Localisation</label>
+                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <LocationPicker
+                                    onLocationSelect={(loc) => {
+                                        setData(prev => ({ ...prev, location: loc, wilaya: loc.wilaya || prev.wilaya }));
+                                    }}
+                                />
                             </div>
                         </div>
 

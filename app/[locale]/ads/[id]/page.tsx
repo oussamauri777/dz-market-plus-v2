@@ -6,6 +6,13 @@ import { useRouter } from '@/i18n/routing';
 import { MessageCircle, Phone, MapPin, Calendar, Share2, Heart, ShieldCheck, User } from 'lucide-react';
 import ReviewSection from '@/components/reviews/ReviewSection';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import DistanceCalculator from '@/components/DistanceCalculator';
+
+const MapPreview = dynamic(() => import('@/components/MapPreview'), {
+    ssr: false,
+    loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">Loading Map...</div>
+});
 
 interface Ad {
     _id: string;
@@ -23,6 +30,13 @@ interface Ad {
         createdAt: string;
     };
     createdAt: string;
+    location?: {
+        latitude: number;
+        longitude: number;
+        address: string;
+        wilaya: string;
+        commune: string;
+    };
 }
 
 export default function AdDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -44,6 +58,7 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
     useEffect(() => {
         if (adId) {
             fetchAd();
+            incrementView();
         }
     }, [adId]);
 
@@ -53,11 +68,26 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
             if (res.ok) {
                 const data = await res.json();
                 setAd(data);
+
+                // Update local storage for recently viewed
+                const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+                if (!viewed.includes(adId)) {
+                    const newViewed = [adId, ...viewed].slice(0, 10);
+                    localStorage.setItem('recentlyViewed', JSON.stringify(newViewed));
+                }
             }
         } catch (error) {
             console.error('Failed to fetch ad:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const incrementView = async () => {
+        try {
+            await fetch(`/api/ads/${adId}/view`, { method: 'POST' });
+        } catch (error) {
+            console.error('Failed to increment view:', error);
         }
     };
 
@@ -204,6 +234,25 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
                             </div>
                         </div>
 
+                        {/* Location & Map */}
+                        {ad.location && ad.location.latitude && ad.location.longitude && (
+                            <div className="bg-white rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-100">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-gray-900">Localisation</h3>
+                                    <DistanceCalculator
+                                        latitude={ad.location.latitude}
+                                        longitude={ad.location.longitude}
+                                    />
+                                </div>
+                                <p className="text-sm text-gray-500 mb-4">{ad.location.address}</p>
+                                <MapPreview
+                                    latitude={ad.location.latitude}
+                                    longitude={ad.location.longitude}
+                                    address={ad.location.address}
+                                />
+                            </div>
+                        )}
+
                         {/* Reviews */}
                         <div className="bg-white rounded-3xl shadow-sm p-6 sm:p-8 border border-gray-100">
                             <ReviewSection
@@ -289,6 +338,6 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

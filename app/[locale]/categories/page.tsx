@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import AdCard from '@/components/ads/AdCard';
 import dbConnect from '@/lib/db';
 import Ad from '@/models/Ad';
+import MapSearchWrapper from '@/components/MapSearchWrapper';
 
 async function getAds(searchParams: { [key: string]: string | string[] | undefined }) {
 
@@ -107,11 +108,15 @@ export default async function SearchPage({
                 {/* Results */}
                 <div className="flex-grow">
                     <h1 className="text-2xl font-bold mb-6">Résultats ({ads.length})</h1>
+
+                    {/* Map for Mobile */}
+                    <div className="lg:hidden mb-6 h-[300px]">
+                        <MapSearchWrapper ads={ads} />
+                    </div>
+
                     {ads.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             {ads.map((ad: any) => (
-
-
                                 <AdCard key={ad._id} ad={ad} />
                             ))}
                         </div>
@@ -120,6 +125,11 @@ export default async function SearchPage({
                             <p className="text-gray-500">Aucune annonce trouvée.</p>
                         </div>
                     )}
+                </div>
+
+                {/* Map for Desktop */}
+                <div className="hidden lg:block w-[400px] flex-shrink-0">
+                    <MapSearchWrapper ads={ads} />
                 </div>
             </div>
         </div>

@@ -22,6 +22,13 @@ const AdSchema = new Schema({
         type: String,
         required: [true, 'Please provide a wilaya'],
     },
+    location: {
+        address: String,
+        latitude: Number,
+        longitude: Number,
+        wilaya: String,
+        commune: String,
+    },
     images: {
         type: [String],
         default: [],
@@ -35,6 +42,10 @@ const AdSchema = new Schema({
         type: String,
         enum: ['active', 'sold', 'deleted'],
         default: 'active',
+    },
+    views: {
+        type: Number,
+        default: 0,
     },
     createdAt: {
         type: Date,

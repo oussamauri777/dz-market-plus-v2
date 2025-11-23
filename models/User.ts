@@ -33,6 +33,19 @@ const UserSchema = new Schema({
         type: Date,
         default: Date.now,
     },
+    searchHistory: {
+        type: [String],
+        default: [],
+    },
+    viewedCategories: {
+        type: [String],
+        default: [],
+    },
+    recentlyViewedAds: {
+        type: [Schema.Types.ObjectId],
+        ref: 'Ad',
+        default: [],
+    },
 });
 
 const User = models.User || model('User', UserSchema);

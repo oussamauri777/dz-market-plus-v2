@@ -12,7 +12,7 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { title, description, price, category, wilaya, images } = await req.json();
+        const { title, description, price, category, wilaya, images, location } = await req.json();
 
         if (!title || !description || !price || !category || !wilaya) {
             return new NextResponse("Missing fields", { status: 400 });
@@ -27,6 +27,7 @@ export async function POST(req: Request) {
             category,
             wilaya,
             images,
+            location,
             user: session.user.id,
         });
 

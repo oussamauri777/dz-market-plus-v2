@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/routing';
 import { Send, Smile, FileText, Download, Trash2, ArrowLeft, MoreVertical, Phone } from 'lucide-react';
-import { socket } from '@/lib/socket';
+import Pusher from 'pusher-js';
 import EmojiPicker from 'emoji-picker-react';
 import VoiceRecorder from '@/components/chat/VoiceRecorder';
 import AttachmentPicker from '@/components/chat/AttachmentPicker';
@@ -90,7 +90,7 @@ export default function ChatPage() {
                             if (markReadRes.ok) {
                                 const { messageIds } = await markReadRes.json();
                                 if (messageIds && messageIds.length > 0) {
-                                    socket.emit('messages_read', { conversationId, messageIds });
+                                    // Socket emit removed, handled by API trigger
                                 }
                             }
                         } catch (error) {
@@ -116,15 +116,18 @@ export default function ChatPage() {
                 forceUpdate(n => n + 1);
             };
 
-            socket.on('receive_message', handleReceiveMessage);
-            socket.on('message_deleted', handleMessageDeleted);
-            socket.on('messages_read', handleMessagesRead);
-            socket.emit('join_room', conversationId);
+            const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+                cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+            });
+
+            const channel = pusher.subscribe(conversationId);
+
+            channel.bind('receive_message', handleReceiveMessage);
+            channel.bind('message_deleted', handleMessageDeleted);
+            channel.bind('messages_read', handleMessagesRead);
 
             return () => {
-                socket.off('receive_message', handleReceiveMessage);
-                socket.off('message_deleted', handleMessageDeleted);
-                socket.off('messages_read', handleMessagesRead);
+                pusher.unsubscribe(conversationId);
             };
         }
     }, [status, conversationId]);
@@ -160,7 +163,7 @@ export default function ChatPage() {
                 if (markReadRes.ok) {
                     const { messageIds } = await markReadRes.json();
                     if (messageIds && messageIds.length > 0) {
-                        socket.emit('messages_read', { conversationId, messageIds });
+                        // Socket emit removed
                     }
                 }
             }
@@ -195,7 +198,7 @@ export default function ChatPage() {
                 });
                 forceUpdate(n => n + 1);
                 setTimeout(() => scrollToBottom(), 100);
-                socket.emit('send_message', savedMessage);
+                // Socket emit removed
             }
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -209,7 +212,7 @@ export default function ChatPage() {
             });
 
             if (res.ok) {
-                socket.emit('delete_message', { conversationId, messageId });
+                // Socket emit removed
                 setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
             }
         } catch (error) {
@@ -235,7 +238,7 @@ export default function ChatPage() {
                 const savedMessage = await res.json();
                 setMessages((prev) => [...prev, savedMessage]);
                 setTimeout(() => scrollToBottom(), 100);
-                socket.emit('send_message', savedMessage);
+                // Socket emit removed
             }
         } catch (error) {
             console.error('Failed to send attachment:', error);

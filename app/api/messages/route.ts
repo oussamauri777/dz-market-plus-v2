@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import Message from '@/models/Message';
 import Conversation from '@/models/Conversation';
+import { pusherServer } from '@/lib/pusher';
 
 // GET - Fetch messages for a conversation
 export async function GET(req: Request) {
@@ -112,6 +113,20 @@ export async function POST(req: Request) {
         // Populate sender info
         await message.populate('sender', 'name');
 
+
+
+        // Trigger Pusher event
+        await pusherServer.trigger(conversationId, 'receive_message', {
+            ...message.toObject(),
+            _id: message._id.toString(),
+            conversation: message.conversation.toString(),
+            sender: {
+                ...(message.sender as any).toObject(),
+                _id: (message.sender as any)._id.toString(),
+            },
+            createdAt: message.createdAt.toISOString(),
+        });
+
         return NextResponse.json({
             ...message.toObject(),
             _id: message._id.toString(),
@@ -158,6 +173,9 @@ export async function DELETE(req: Request) {
 
         // Delete the message
         await Message.findByIdAndDelete(messageId);
+
+        // Trigger Pusher event
+        await pusherServer.trigger(message.conversation.toString(), 'message_deleted', messageId);
 
         return NextResponse.json({ success: true, messageId });
     } catch (error) {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from '@/i18n/routing';
 import { MessageCircle, Search } from 'lucide-react';
-import { socket } from '@/lib/socket';
+import Pusher from 'pusher-js';
 
 interface Conversation {
     _id: string;
@@ -62,15 +62,25 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
                 );
             };
 
-            socket.on('receive_message', handleReceiveMessage);
-            socket.on('messages_read', handleMessagesRead);
+            const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+                cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+            });
+
+            // Subscribe to all conversations
+            conversations.forEach((conv) => {
+                const channel = pusher.subscribe(conv._id);
+                channel.bind('receive_message', handleReceiveMessage);
+                channel.bind('messages_read', handleMessagesRead);
+            });
 
             return () => {
-                socket.off('receive_message', handleReceiveMessage);
-                socket.off('messages_read', handleMessagesRead);
+                conversations.forEach((conv) => {
+                    pusher.unsubscribe(conv._id);
+                });
+                pusher.disconnect();
             };
         }
-    }, [session, pathname]);
+    }, [session, pathname, conversations]);
 
     const fetchConversations = async () => {
         try {

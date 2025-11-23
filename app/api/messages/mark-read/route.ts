@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import Message from '@/models/Message';
 import Conversation from '@/models/Conversation';
+import { pusherServer } from '@/lib/pusher';
 
 export async function PATCH(req: Request) {
     try {
@@ -52,11 +53,20 @@ export async function PATCH(req: Request) {
             read: true,
         }).select('_id');
 
-        return NextResponse.json({
+        const response = {
             success: true,
             count: result.modifiedCount,
             messageIds: readMessages.map(m => m._id.toString()),
-        });
+        };
+
+        if (readMessages.length > 0) {
+            await pusherServer.trigger(conversationId, 'messages_read', {
+                conversationId,
+                messageIds: response.messageIds,
+            });
+        }
+
+        return NextResponse.json(response);
     } catch (error) {
         console.error('[MESSAGES_MARK_READ]', error);
         return new NextResponse('Internal Error', { status: 500 });

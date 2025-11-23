@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from '@/i18n/routing';
 import { MessageCircle, Search } from 'lucide-react';
 import Pusher from 'pusher-js';
+import { useRef } from 'react';
 
 interface Conversation {
     _id: string;
@@ -22,65 +23,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-
-    useEffect(() => {
-        if (session) {
-            fetchConversations();
-
-            const handleReceiveMessage = (message: any) => {
-                const pathParts = pathname?.split('/') || [];
-                const activeConversationId = pathParts[pathParts.length - 1];
-                const isActiveConversation = activeConversationId === message.conversation;
-
-                setConversations((prev) =>
-                    prev.map((conv) => {
-                        if (conv._id === message.conversation) {
-                            const updatedConv = {
-                                ...conv,
-                                lastMessage: message.content || (message.type === 'image' ? '📷 Photo' : message.type === 'audio' ? '🎤 Audio' : '📎 Fichier'),
-                                lastMessageAt: message.createdAt,
-                            };
-
-                            if (message.sender._id !== session.user.id && !isActiveConversation) {
-                                updatedConv.unreadCount = (conv.unreadCount || 0) + 1;
-                            }
-
-                            return updatedConv;
-                        }
-                        return conv;
-                    }).sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
-                );
-            };
-
-            const handleMessagesRead = (data: { conversationId: string; messageIds: string[] }) => {
-                setConversations((prev) =>
-                    prev.map((conv) =>
-                        conv._id === data.conversationId
-                            ? { ...conv, unreadCount: 0 }
-                            : conv
-                    )
-                );
-            };
-
-            const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-                cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-            });
-
-            // Subscribe to all conversations
-            conversations.forEach((conv) => {
-                const channel = pusher.subscribe(conv._id);
-                channel.bind('receive_message', handleReceiveMessage);
-                channel.bind('messages_read', handleMessagesRead);
-            });
-
-            return () => {
-                conversations.forEach((conv) => {
-                    pusher.unsubscribe(conv._id);
-                });
-                pusher.disconnect();
-            };
-        }
-    }, [session, pathname, conversations]);
+    const pusherRef = useRef<Pusher | null>(null);
 
     const fetchConversations = async () => {
         try {
@@ -96,6 +39,83 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
         }
     };
 
+    useEffect(() => {
+        if (session) {
+            fetchConversations();
+        }
+    }, [session]);
+
+    const handleReceiveMessage = (message: any) => {
+        const pathParts = pathname?.split('/') || [];
+        const activeConversationId = pathParts[pathParts.length - 1];
+        const isActiveConversation = activeConversationId === message.conversation;
+
+        setConversations((prev) =>
+            prev.map((conv) => {
+                if (conv._id === message.conversation) {
+                    const updatedConv = {
+                        ...conv,
+                        lastMessage: message.content || (message.type === 'image' ? '📷 Photo' : message.type === 'audio' ? '🎤 Audio' : '📎 Fichier'),
+                        lastMessageAt: message.createdAt,
+                    };
+
+                    if (message.sender._id !== session?.user?.id && !isActiveConversation) {
+                        updatedConv.unreadCount = (conv.unreadCount || 0) + 1;
+                    }
+
+                    return updatedConv;
+                }
+                return conv;
+            }).sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+        );
+    };
+
+    const handleMessagesRead = (data: { conversationId: string; messageIds: string[] }) => {
+        setConversations((prev) =>
+            prev.map((conv) =>
+                conv._id === data.conversationId
+                    ? { ...conv, unreadCount: 0 }
+                    : conv
+            )
+        );
+    };
+
+    // Initialize Pusher once
+    useEffect(() => {
+        if (!pusherRef.current) {
+            pusherRef.current = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+                cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+            });
+        }
+
+        return () => {
+            if (pusherRef.current) {
+                pusherRef.current.disconnect();
+                pusherRef.current = null;
+            }
+        };
+    }, []);
+
+    // Manage subscriptions
+    useEffect(() => {
+        if (!pusherRef.current || conversations.length === 0) return;
+
+        const pusher = pusherRef.current;
+
+        conversations.forEach((conv) => {
+            const channel = pusher.subscribe(conv._id);
+            channel.unbind_all();
+            channel.bind('receive_message', handleReceiveMessage);
+            channel.bind('messages_read', handleMessagesRead);
+        });
+
+        return () => {
+            conversations.forEach((conv) => {
+                pusher.unsubscribe(conv._id);
+            });
+        };
+    }, [conversations, pathname, session]);
+
     const getOtherParticipant = (conv: Conversation) => {
         return conv.participants.find((p) => p._id !== session?.user?.id);
     };
@@ -110,10 +130,12 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
             conv.ad.title.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
+    const isChatOpen = pathname?.includes('/messages/') && !pathname?.endsWith('/messages');
+
     return (
         <div className="fixed inset-0 top-[64px] flex bg-gray-50">
             {/* Sidebar - Conversation List */}
-            <div className={`w-full md:w-[380px] bg-white border-r border-gray-200 flex flex-col ${pathname?.includes('/messages/') && pathname.split('/').length > 3 ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-[380px] bg-white border-r border-gray-200 flex flex-col ${isChatOpen ? 'hidden md:flex' : 'flex'}`}>
                 {/* Sidebar Header */}
                 <div className="p-4 border-b border-gray-100">
                     <div className="flex items-center justify-between mb-4">
@@ -201,7 +223,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
             </div>
 
             {/* Main Content Area */}
-            <div className={`flex-1 flex flex-col bg-[#efeae2] relative overflow-hidden ${!pathname?.includes('/messages/') || pathname.split('/').length <= 3 ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`flex-1 flex flex-col bg-[#efeae2] relative overflow-hidden ${!isChatOpen ? 'hidden md:flex' : 'flex'}`}>
                 {/* WhatsApp-style background pattern */}
                 <div
                     className="absolute inset-0 opacity-[0.06]"

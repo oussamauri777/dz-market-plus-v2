@@ -173,7 +173,7 @@ export async function searchAds(params: SearchParams) {
     pipeline.push({
         $facet: {
             metadata: [{ $count: "total" }],
-            data: dataPipeline
+            data: dataPipeline as any
         }
     });
 

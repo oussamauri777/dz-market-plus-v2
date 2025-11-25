@@ -39,7 +39,7 @@ export default function DistanceCalculator({ latitude, longitude }: DistanceCalc
                     setDistance(dist);
                 },
                 (err) => {
-                    console.error("Error getting location", err);
+                    // Fail silently for location errors (common on non-HTTPS dev environments)
                     setError("Location access denied");
                 }
             );

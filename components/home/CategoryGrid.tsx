@@ -23,7 +23,7 @@ export default function CategoryGrid() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Explorer par Catégorie</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {CATEGORIES.map((cat, index) => (
-                    <Link href={`/categories?category=${cat.name}`} key={index}>
+                    <Link href={`/search?category=${cat.name}`} key={index}>
                         <motion.div
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}

@@ -16,7 +16,7 @@ export default function Hero() {
         const params = new URLSearchParams();
         if (query) params.append('query', query);
         if (wilaya) params.append('wilaya', wilaya);
-        router.push(`/categories?${params.toString()}`);
+        router.push(`/search?${params.toString()}`);
     };
 
     return (
@@ -81,7 +81,7 @@ export default function Hero() {
                     {['Voitures', 'Immobilier', 'Téléphones', 'Meubles'].map((cat) => (
                         <button
                             key={cat}
-                            onClick={() => router.push(`/categories?category=${cat}`)}
+                            onClick={() => router.push(`/search?category=${cat}`)}
                             className="bg-white text-gray-600 hover:text-primary hover:bg-blue-50 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border border-gray-200 shadow-sm"
                         >
                             {cat}

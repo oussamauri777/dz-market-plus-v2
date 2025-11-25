@@ -11,7 +11,7 @@ export async function GET(
 
         await dbConnect();
 
-        const ad = await Ad.findById(id).populate('user', 'name email phone wilaya').lean();
+        const ad = await Ad.findById(id).populate('user', 'name email phone wilaya image').lean();
 
         if (!ad) {
             return new NextResponse('Ad not found', { status: 404 });

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
@@ -105,7 +105,10 @@ export async function POST(req: Request) {
             exists: false,
         });
     } catch (error) {
-        console.error('[CONVERSATIONS_POST]', error);
-        return new NextResponse('Internal Error', { status: 500 });
+        console.error('[CONVERSATIONS_POST] Error:', error);
+        if (error instanceof Error) {
+            console.error('[CONVERSATIONS_POST] Stack:', error.stack);
+        }
+        return new NextResponse(`Internal Error: ${error instanceof Error ? error.message : 'Unknown error'}`, { status: 500 });
     }
 }

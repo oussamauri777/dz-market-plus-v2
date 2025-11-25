@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Ad from "@/models/Ad";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 export async function POST(req: Request) {
     try {
@@ -12,9 +12,9 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { title, description, price, category, wilaya, images, location } = await req.json();
+        const { title, description, price, category, subcategory, wilaya, images, location } = await req.json();
 
-        if (!title || !description || !price || !category || !wilaya) {
+        if (!title || !description || !price || !category || !subcategory || !wilaya) {
             return new NextResponse("Missing fields", { status: 400 });
         }
 
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
             description,
             price,
             category,
+            subcategory,
             wilaya,
             images,
             location,
@@ -44,6 +45,7 @@ export async function GET(req: Request) {
         const category = searchParams.get("category");
         const wilaya = searchParams.get("wilaya");
         const query = searchParams.get("query");
+        const ids = searchParams.get("ids");
         const limit = parseInt(searchParams.get("limit") || "10");
 
         await dbConnect();
@@ -51,7 +53,14 @@ export async function GET(req: Request) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const filter: any = { status: 'active' };
 
+        if (ids) {
+            filter._id = { $in: ids.split(',') };
+        }
 
+        const user = searchParams.get("user");
+        if (user) {
+            filter.user = user;
+        }
 
         if (category) {
             filter.category = category;

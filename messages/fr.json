@@ -10,6 +10,7 @@
   },
   "Navigation": {
     "home": "Accueil",
+    "search": "Recherche",
     "categories": "Catégories",
     "login": "Se connecter",
     "register": "S'inscrire",

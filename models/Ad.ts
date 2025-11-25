@@ -18,6 +18,10 @@ const AdSchema = new Schema({
         type: String,
         required: [true, 'Please provide a category'],
     },
+    subcategory: {
+        type: String,
+        required: [true, 'Please provide a subcategory'],
+    },
     wilaya: {
         type: String,
         required: [true, 'Please provide a wilaya'],
@@ -43,6 +47,11 @@ const AdSchema = new Schema({
         enum: ['active', 'sold', 'deleted'],
         default: 'active',
     },
+    condition: {
+        type: String,
+        enum: ['new', 'like-new', 'good', 'fair', 'broken'],
+        default: 'good',
+    },
     views: {
         type: Number,
         default: 0,
@@ -52,6 +61,21 @@ const AdSchema = new Schema({
         default: Date.now,
     },
 });
+
+// Indexes for search and filtering
+AdSchema.index({
+    title: 'text',
+    description: 'text',
+    category: 'text',
+    wilaya: 'text',
+    'location.address': 'text'
+});
+AdSchema.index({ price: 1 });
+AdSchema.index({ category: 1 });
+AdSchema.index({ subcategory: 1 });
+AdSchema.index({ wilaya: 1 });
+AdSchema.index({ createdAt: -1 });
+AdSchema.index({ 'location.latitude': 1, 'location.longitude': 1 });
 
 const Ad = models.Ad || model('Ad', AdSchema);
 

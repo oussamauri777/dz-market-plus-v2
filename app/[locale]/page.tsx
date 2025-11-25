@@ -23,7 +23,7 @@ export default function Home() {
 
           <div className="text-center mt-12">
             <Link
-              href="/categories"
+              href="/search"
               className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-8 py-4 rounded-xl font-bold hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm hover:shadow-md"
             >
               Explorer toutes les annonces

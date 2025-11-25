@@ -3,7 +3,7 @@
 import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
-import { MessageCircle, Plus, User, LogOut, Menu, X, Bell } from 'lucide-react';
+import { MessageCircle, Plus, User, LogOut, Menu, X, Bell, Heart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -70,10 +70,17 @@ export default function Navbar() {
                             {t('home')}
                         </Link>
                         <Link
-                            href="/categories"
+                            href="/search"
                             className="text-gray-600 hover:text-primary font-medium transition-colors text-sm hover:bg-gray-50 px-3 py-2 rounded-full"
                         >
-                            {t('categories')}
+                            {t('search')}
+                        </Link>
+                        <Link
+                            href="/favorites"
+                            className="text-gray-600 hover:text-primary font-medium transition-colors text-sm flex items-center gap-1.5 hover:bg-gray-50 px-3 py-2 rounded-full"
+                        >
+                            <Heart className="h-4 w-4" />
+                            Favoris
                         </Link>
                         {session && (
                             <Link
@@ -120,8 +127,13 @@ export default function Navbar() {
                                     href="/profile"
                                     className="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors group"
                                 >
-                                    <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center border border-gray-200 group-hover:border-primary transition-colors">
-                                        <User className="h-4 w-4 text-gray-500 group-hover:text-primary" />
+                                    <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center border border-gray-200 group-hover:border-primary transition-colors overflow-hidden relative">
+                                        {session.user?.image ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={session.user.image} alt={session.user.name || ''} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="h-4 w-4 text-gray-500 group-hover:text-primary" />
+                                        )}
                                     </div>
                                     <span className="text-sm font-medium max-w-[100px] truncate hidden lg:block">
                                         {session.user?.name}
@@ -181,17 +193,27 @@ export default function Navbar() {
                             {t('home')}
                         </Link>
                         <Link
-                            href="/categories"
+                            href="/search"
                             className="block px-4 py-3 rounded-xl text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors"
                         >
-                            {t('categories')}
+                            {t('search')}
+                        </Link>
+                        <Link
+                            href="/favorites"
+                            className="block px-4 py-3 rounded-xl text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors flex items-center gap-2"
+                        >
+                            <Heart className="h-5 w-5" />
+                            Favoris
                         </Link>
                         {session && (
                             <Link
                                 href="/messages"
                                 className="block px-4 py-3 rounded-xl text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50 flex items-center justify-between transition-colors"
                             >
-                                Messages
+                                <div className="flex items-center gap-2">
+                                    <MessageCircle className="h-5 w-5" />
+                                    Messages
+                                </div>
                                 {unreadCount > 0 && (
                                     <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                                         {unreadCount}
@@ -210,8 +232,13 @@ export default function Navbar() {
                         <div className="pt-4 pb-4 border-t border-gray-100 bg-gray-50/50">
                             <div className="flex items-center px-6">
                                 <div className="flex-shrink-0">
-                                    <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100">
-                                        <User className="h-6 w-6 text-gray-500" />
+                                    <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100 overflow-hidden relative">
+                                        {session.user?.image ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={session.user.image} alt={session.user.name || ''} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="h-6 w-6 text-gray-500" />
+                                        )}
                                     </div>
                                 </div>
                                 <div className="ml-3">

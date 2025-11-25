@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { CldUploadWidget } from 'next-cloudinary';
-import { Camera, MapPin, Tag, Type, FileText, DollarSign, X, UploadCloud } from 'lucide-react';
+import { Camera, MapPin, Tag, Type, FileText, DollarSign, X, UploadCloud, Layers } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { CATEGORIES } from '@/lib/constants/categories';
 
 const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
     ssr: false,
@@ -24,11 +25,6 @@ const WILAYAS = [
     "In Salah", "In Guezzam", "Touggourt", "Djanet", "El M'Ghair", "El Meniaa"
 ];
 
-const CATEGORIES = [
-    "Voitures", "Immobilier", "Téléphones & Électronique", "Multimédia", "Maison & Jardin",
-    "Mode & Beauté", "Jobs", "Services", "Animaux", "Sport & Loisirs"
-];
-
 export default function CreateAdPage() {
     const t = useTranslations('Common');
     const router = useRouter();
@@ -37,11 +33,14 @@ export default function CreateAdPage() {
         description: '',
         price: '',
         category: '',
+        subcategory: '',
         wilaya: '',
         images: [] as string[],
         location: null as any,
     });
     const [loading, setLoading] = useState(false);
+
+    const selectedCategory = CATEGORIES.find(c => c.label === data.category);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -149,7 +148,7 @@ export default function CreateAdPage() {
                                 </div>
                             </div>
 
-                            {/* Category & Wilaya */}
+                            {/* Category & Subcategory */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-900 mb-2">Catégorie</label>
@@ -161,16 +160,40 @@ export default function CreateAdPage() {
                                             required
                                             className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white"
                                             value={data.category}
-                                            onChange={(e) => setData({ ...data, category: e.target.value })}
+                                            onChange={(e) => setData({ ...data, category: e.target.value, subcategory: '' })}
                                         >
                                             <option value="">Sélectionner</option>
                                             {CATEGORIES.map(cat => (
-                                                <option key={cat} value={cat}>{cat}</option>
+                                                <option key={cat.id} value={cat.label}>{cat.label}</option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
 
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-900 mb-2">Sous-catégorie</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Layers className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                        <select
+                                            required
+                                            disabled={!data.category}
+                                            className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                                            value={data.subcategory}
+                                            onChange={(e) => setData({ ...data, subcategory: e.target.value })}
+                                        >
+                                            <option value="">Sélectionner</option>
+                                            {selectedCategory?.subcategories.map(sub => (
+                                                <option key={sub} value={sub}>{sub}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Wilaya & Price */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-900 mb-2">Wilaya</label>
                                     <div className="relative">
@@ -190,23 +213,22 @@ export default function CreateAdPage() {
                                         </select>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Price */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-2">Prix (DA)</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <DollarSign className="h-5 w-5 text-gray-400" />
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-900 mb-2">Prix (DA)</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <DollarSign className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="number"
+                                            required
+                                            placeholder="0"
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder-gray-400"
+                                            value={data.price}
+                                            onChange={(e) => setData({ ...data, price: e.target.value })}
+                                        />
                                     </div>
-                                    <input
-                                        type="number"
-                                        required
-                                        placeholder="0"
-                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder-gray-400"
-                                        value={data.price}
-                                        onChange={(e) => setData({ ...data, price: e.target.value })}
-                                    />
                                 </div>
                             </div>
 

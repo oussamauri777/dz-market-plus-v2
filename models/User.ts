@@ -46,6 +46,20 @@ const UserSchema = new Schema({
         ref: 'Ad',
         default: [],
     },
+    bio: {
+        type: String,
+        default: '',
+    },
+    badges: {
+        emailVerified: { type: Boolean, default: false },
+        phoneVerified: { type: Boolean, default: false },
+        identityVerified: { type: Boolean, default: false },
+    },
+    favorites: {
+        type: [Schema.Types.ObjectId],
+        ref: 'Ad',
+        default: [],
+    },
 });
 
 const User = models.User || model('User', UserSchema);

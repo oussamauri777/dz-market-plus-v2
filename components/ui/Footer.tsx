@@ -2,7 +2,7 @@ import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 
 export default function Footer() {
-    const t = useTranslations('Navigation'); // Using Navigation keys for now, can add Footer keys later
+    const t = useTranslations('Navigation');
 
     return (
         <footer className="bg-gray-800 text-white py-8">
@@ -23,7 +23,7 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/categories" className="text-gray-400 hover:text-white text-sm">
+                                <Link href="/search" className="text-gray-400 hover:text-white text-sm">
                                     {t('categories')}
                                 </Link>
                             </li>

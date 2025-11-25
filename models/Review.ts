@@ -1,21 +1,6 @@
 import { Schema, model, models } from 'mongoose';
 
 const ReviewSchema = new Schema({
-    reviewer: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    targetUser: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    ad: {
-        type: Schema.Types.ObjectId,
-        ref: 'Ad',
-        required: true,
-    },
     rating: {
         type: Number,
         required: true,
@@ -25,7 +10,21 @@ const ReviewSchema = new Schema({
     comment: {
         type: String,
         required: true,
-        maxLength: 500,
+    },
+    buyer: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    seller: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    ad: {
+        type: Schema.Types.ObjectId,
+        ref: 'Ad',
+        required: true,
     },
     createdAt: {
         type: Date,
@@ -33,8 +32,8 @@ const ReviewSchema = new Schema({
     },
 });
 
-// Prevent multiple reviews for the same ad by the same user
-ReviewSchema.index({ reviewer: 1, ad: 1 }, { unique: true });
+// Prevent multiple reviews from same buyer for same ad
+ReviewSchema.index({ buyer: 1, ad: 1 }, { unique: true });
 
 const Review = models.Review || model('Review', ReviewSchema);
 

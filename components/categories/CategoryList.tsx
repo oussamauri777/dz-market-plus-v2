@@ -22,7 +22,7 @@ export default function CategoryList() {
         <div className="py-12">
             <div className="flex justify-between items-end mb-8 px-4">
                 <h2 className="text-2xl font-bold text-gray-900">{t('categories')}</h2>
-                <Link href="/categories" className="text-primary font-medium hover:underline text-sm">
+                <Link href="/search" className="text-primary font-medium hover:underline text-sm">
                     Voir tout
                 </Link>
             </div>
@@ -31,7 +31,7 @@ export default function CategoryList() {
                 {categories.map((cat) => (
                     <Link
                         key={cat.slug}
-                        href={`/categories?category=${cat.slug}`}
+                        href={`/search?category=${cat.slug}`}
                         className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300"
                     >
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${cat.color} group-hover:scale-110 transition-transform duration-300`}>
@@ -43,7 +43,7 @@ export default function CategoryList() {
                     </Link>
                 ))}
                 <Link
-                    href="/categories"
+                    href="/search"
                     className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-all duration-300"
                 >
                     <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-3 text-gray-600 group-hover:scale-110 transition-transform duration-300">

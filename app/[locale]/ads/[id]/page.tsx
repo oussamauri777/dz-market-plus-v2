@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from '@/i18n/routing';
+import { useRouter, Link } from '@/i18n/routing';
 import { MessageCircle, Phone, MapPin, Calendar, Share2, Heart, ShieldCheck, User } from 'lucide-react';
 import ReviewSection from '@/components/reviews/ReviewSection';
 import Image from 'next/image';
@@ -26,6 +26,7 @@ interface Ad {
         _id: string;
         name: string;
         email: string;
+        image?: string;
         phone?: string;
         createdAt: string;
     };
@@ -153,7 +154,7 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
                     <nav className="text-sm text-gray-500">
                         <span className="hover:text-primary cursor-pointer" onClick={() => router.push('/')}>Accueil</span>
                         <span className="mx-2">/</span>
-                        <span className="hover:text-primary cursor-pointer" onClick={() => router.push('/categories')}>{ad.category}</span>
+                        <span className="hover:text-primary cursor-pointer" onClick={() => router.push(`/search?category=${ad.category}`)}>{ad.category}</span>
                         <span className="mx-2">/</span>
                         <span className="text-gray-900 font-medium truncate max-w-[200px]">{ad.title}</span>
                     </nav>
@@ -278,11 +279,19 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
                         {/* Seller Card */}
                         <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
                             <div className="flex items-center gap-4 mb-6">
-                                <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-                                    <User className="w-7 h-7 text-gray-500" />
-                                </div>
+                                <Link href={`/user/${ad.user._id}`} className="flex-shrink-0 group">
+                                    <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 group-hover:border-primary transition-colors overflow-hidden relative">
+                                        {ad.user.image ? (
+                                            <Image src={ad.user.image} alt={ad.user.name} fill className="object-cover" />
+                                        ) : (
+                                            <User className="w-7 h-7 text-gray-500 group-hover:text-primary" />
+                                        )}
+                                    </div>
+                                </Link>
                                 <div>
-                                    <h3 className="font-bold text-gray-900">{ad.user.name}</h3>
+                                    <Link href={`/user/${ad.user._id}`} className="font-bold text-gray-900 hover:text-primary transition-colors">
+                                        {ad.user.name}
+                                    </Link>
                                     <p className="text-xs text-gray-500">
                                         Membre depuis {new Date(ad.user.createdAt || Date.now()).getFullYear()}
                                     </p>

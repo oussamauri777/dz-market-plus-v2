@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ReviewForm from './ReviewForm';
 import ReviewList from './ReviewList';
 import { useSession } from 'next-auth/react';
@@ -13,55 +13,34 @@ interface ReviewSectionProps {
 
 export default function ReviewSection({ targetUserId, adId, sellerName }: ReviewSectionProps) {
     const { data: session } = useSession();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [reviews, setReviews] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    const fetchReviews = async () => {
-        try {
-            const res = await fetch(`/api/reviews?targetUserId=${targetUserId}`);
-            if (res.ok) {
-                const data = await res.json();
-                setReviews(data);
-            }
-        } catch (error) {
-            console.error('Failed to fetch reviews:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchReviews();
-    }, [targetUserId]);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const isSeller = session?.user?.id === targetUserId;
-    const hasReviewed = reviews.some((r) => r.reviewer._id === session?.user?.id && r.ad === adId);
+
+    const handleReviewSuccess = () => {
+        setRefreshKey(prev => prev + 1);
+    };
 
     return (
         <div className="mt-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-6">Seller Reviews ({reviews.length})</h2>
+            <h2 className="text-2xl font-bold mb-6">Seller Reviews</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                    <ReviewList reviews={reviews} />
+                    <ReviewList key={refreshKey} sellerId={targetUserId} />
                 </div>
 
                 <div>
                     {session ? (
-                        !isSeller && !hasReviewed ? (
+                        !isSeller ? (
                             <ReviewForm
                                 targetUserId={targetUserId}
                                 adId={adId}
-                                onSuccess={fetchReviews}
+                                onSuccess={handleReviewSuccess}
                             />
-                        ) : isSeller ? (
-                            <div className="bg-gray-50 p-6 rounded-lg text-center text-gray-500">
-                                You cannot review your own ad.
-                            </div>
                         ) : (
                             <div className="bg-gray-50 p-6 rounded-lg text-center text-gray-500">
-                                You have already reviewed this ad.
+                                You cannot review your own ad.
                             </div>
                         )
                     ) : (

@@ -17,7 +17,15 @@ export async function POST(req: Request) {
         const { targetUserId, adId, rating, comment } = await req.json();
 
         if (!targetUserId || !adId || !rating || !comment) {
+            console.log("[REVIEWS_POST] Missing fields:", { targetUserId, adId, rating, comment });
             return new NextResponse("Missing fields", { status: 400 });
+        }
+
+        // Validate ObjectIds
+        const isValidObjectId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
+        if (!isValidObjectId(targetUserId) || !isValidObjectId(adId)) {
+            console.log("[REVIEWS_POST] Invalid IDs:", { targetUserId, adId });
+            return new NextResponse("Invalid User ID or Ad ID", { status: 400 });
         }
 
         if (session.user.id === targetUserId) {
@@ -45,9 +53,9 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json(review);
-    } catch (error) {
-        console.log("[REVIEWS_POST]", error);
-        return new NextResponse("Internal Error", { status: 500 });
+    } catch (error: any) {
+        console.error("[REVIEWS_POST] Error:", error);
+        return new NextResponse(`Internal Error: ${error.message}`, { status: 500 });
     }
 }
 

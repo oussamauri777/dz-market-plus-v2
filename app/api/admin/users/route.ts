@@ -25,16 +25,21 @@ export async function GET(req: Request) {
         const total = await User.countDocuments(query);
         const users = await User.find(query)
             .select('-password')
-            .sort({ createdAt: -1 })
+            .sort({ _id: -1 }) // Sort by _id (contains timestamp) instead of createdAt for backward compatibility
             .skip((page - 1) * limit)
             .limit(limit)
             .lean();
+
+        console.log('[ADMIN_USERS_GET] Found', users.length, 'users, total:', total, 'query:', JSON.stringify(query));
+        if (users.length > 0) {
+            console.log('[ADMIN_USERS_GET] First user:', { id: users[0]._id, name: users[0].name, createdAt: users[0].createdAt });
+        }
 
         return NextResponse.json({
             users: users.map((u) => ({
                 ...u,
                 _id: u._id.toString(),
-                createdAt: u.createdAt.toISOString(),
+                createdAt: u.createdAt?.toISOString() || new Date().toISOString(),
             })),
             pagination: {
                 total,

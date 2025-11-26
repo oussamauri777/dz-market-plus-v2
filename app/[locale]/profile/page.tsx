@@ -4,7 +4,8 @@ import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { useEffect, useState } from 'react';
-import UserReviews from '@/components/profile/UserReviews';
+import SubmittedReviewList from '@/components/reviews/SubmittedReviewList';
+import SellerAdsList from '@/components/profile/SellerAdsList';
 import Image from 'next/image';
 import { Camera, MapPin, Phone, User, Save, Loader2 } from 'lucide-react';
 import { CldUploadWidget } from 'next-cloudinary';
@@ -248,8 +249,17 @@ export default function ProfilePage() {
                     </form>
                 </div>
 
-                {/* Reviews Section */}
-                {session.user?.id && <UserReviews userId={session.user.id} />}
+                {/* My Ads Section */}
+                <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100 p-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">Mes Annonces</h2>
+                    {session.user?.id && <SellerAdsList userId={session.user.id} />}
+                </div>
+
+                {/* My Submitted Reviews Section */}
+                <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100 p-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">Mes Avis</h2>
+                    {session.user?.id && <SubmittedReviewList userId={session.user.id} />}
+                </div>
             </div>
         </div>
     );

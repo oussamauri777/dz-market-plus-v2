@@ -10,10 +10,17 @@ export async function GET() {
         const session = await getServerSession(authOptions);
 
         if (!session?.user?.id) {
-            return new NextResponse('Unauthorized', { status: 401 });
+            // Return 0 instead of error to avoid console spam
+            return NextResponse.json({ unreadCount: 0 });
         }
 
         await dbConnect();
+
+        // Validate if session.user.id is a valid ObjectId
+        if (!/^[0-9a-fA-F]{24}$/.test(session.user.id)) {
+            console.log('[UNREAD_COUNT_GET] Invalid User ID (likely OAuth ID):', session.user.id);
+            return NextResponse.json({ unreadCount: 0 });
+        }
 
         // Get all conversations where user is a participant
         const conversations = await Conversation.find({
@@ -32,6 +39,6 @@ export async function GET() {
         return NextResponse.json({ unreadCount });
     } catch (error) {
         console.error('[UNREAD_COUNT_GET]', error);
-        return new NextResponse('Internal Error', { status: 500 });
+        return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
     }
 }

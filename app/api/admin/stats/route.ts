@@ -17,7 +17,7 @@ export async function GET() {
 
         // Get recent users (last 5)
         const recentUsers = await User.find()
-            .sort({ createdAt: -1 })
+            .sort({ _id: -1 }) // Sort by _id for backward compatibility
             .limit(5)
             .select('name email createdAt')
             .lean();
@@ -39,7 +39,7 @@ export async function GET() {
             recentUsers: recentUsers.map((u) => ({
                 ...u,
                 _id: u._id.toString(),
-                createdAt: u.createdAt.toISOString(),
+                createdAt: u.createdAt?.toISOString() || new Date().toISOString(),
             })),
             recentAds: recentAds.map((a) => ({
                 ...a,

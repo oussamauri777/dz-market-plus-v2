@@ -11,6 +11,11 @@ const UserSchema = new Schema({
         required: [true, 'Please provide an email'],
         unique: true,
     },
+    role: {
+        type: String,
+        enum: ['buyer', 'seller', 'admin'],
+        default: 'buyer',
+    },
     password: {
         type: String,
         required: [false, 'Please provide a password'], // Optional for OAuth users
@@ -23,19 +28,6 @@ const UserSchema = new Schema({
     },
     wilaya: {
         type: String,
-    },
-    role: {
-        type: String,
-        enum: ['user', 'admin'],
-        default: 'user',
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-    searchHistory: {
-        type: [String],
-        default: [],
     },
     viewedCategories: {
         type: [String],
@@ -60,7 +52,7 @@ const UserSchema = new Schema({
         ref: 'Ad',
         default: [],
     },
-});
+}, { timestamps: true });
 
 const User = models.User || model('User', UserSchema);
 

@@ -26,6 +26,11 @@ const nextConfig = {
                 hostname: 'images.unsplash.com',
                 pathname: '/**',
             },
+            {
+                protocol: 'https' as const,
+                hostname: 'lh3.googleusercontent.com',
+                pathname: '/**',
+            },
         ],
     },
 };

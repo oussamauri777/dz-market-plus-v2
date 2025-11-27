@@ -103,13 +103,23 @@ export default function Navbar() {
                     <div className="hidden md:flex items-center gap-3">
                         <LanguageSwitcher />
 
-                        <Link
-                            href="/ads/create"
-                            className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-bold rounded-full shadow-lg shadow-yellow-400/20 text-gray-900 bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-all hover:scale-105 gap-2"
-                        >
-                            <Plus className="h-4 w-4" />
-                            {t('postAd')}
-                        </Link>
+                        {session ? (
+                            <Link
+                                href="/ads/create"
+                                className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-bold rounded-full shadow-lg shadow-yellow-400/20 text-gray-900 bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-all hover:scale-105 gap-2"
+                            >
+                                <Plus className="h-4 w-4" />
+                                {t('postAd')}
+                            </Link>
+                        ) : (
+                            <Link
+                                href="/login?redirect=/ads/create&message=Vous devez être connecté avant de publier une annonce."
+                                className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-bold rounded-full shadow-lg shadow-yellow-400/20 text-gray-900 bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-all hover:scale-105 gap-2"
+                            >
+                                <Plus className="h-4 w-4" />
+                                {t('postAd')}
+                            </Link>
+                        )}
 
                         {session ? (
                             <div className="flex items-center gap-3 pl-3 border-l border-gray-200 ml-3">

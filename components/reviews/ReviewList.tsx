@@ -8,10 +8,11 @@ import { fr } from 'date-fns/locale';
 import { Link } from '@/i18n/routing';
 
 interface ReviewListProps {
-    sellerId: string;
+    sellerId?: string;
+    adId?: string;
 }
 
-export default function ReviewList({ sellerId }: ReviewListProps) {
+export default function ReviewList({ sellerId, adId }: ReviewListProps) {
     const [reviews, setReviews] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -19,7 +20,16 @@ export default function ReviewList({ sellerId }: ReviewListProps) {
 
     const fetchReviews = async (pageNum: number) => {
         try {
-            const res = await fetch(`/api/reviews?sellerId=${sellerId}&page=${pageNum}&limit=5`);
+            let url = `/api/reviews?page=${pageNum}&limit=5`;
+            if (adId) {
+                url += `&adId=${adId}`;
+            } else if (sellerId) {
+                url += `&sellerId=${sellerId}`;
+            } else {
+                return;
+            }
+
+            const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
                 if (pageNum === 1) {
@@ -38,7 +48,7 @@ export default function ReviewList({ sellerId }: ReviewListProps) {
 
     useEffect(() => {
         fetchReviews(1);
-    }, [sellerId]);
+    }, [sellerId, adId]);
 
     const loadMore = () => {
         const nextPage = page + 1;
@@ -73,40 +83,43 @@ export default function ReviewList({ sellerId }: ReviewListProps) {
 
     return (
         <div className="space-y-6">
-            {reviews.map((review) => (
-                <div key={review._id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex items-start gap-4">
-                        <Link href={`/user/${review.buyer._id}`} className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 block hover:opacity-80 transition-opacity">
-                            {review.buyer.image ? (
-                                <Image src={review.buyer.image} alt={review.buyer.name} fill className="object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xl">
-                                    {review.buyer.name.charAt(0).toUpperCase()}
+            {reviews.map((review) => {
+                if (!review.buyer) return null;
+                return (
+                    <div key={review._id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div className="flex items-start gap-4">
+                            <Link href={`/user/${review.buyer._id}`} className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 block hover:opacity-80 transition-opacity">
+                                {review.buyer.image ? (
+                                    <Image src={review.buyer.image} alt={review.buyer.name} fill className="object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xl">
+                                        {review.buyer.name.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                            </Link>
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1">
+                                    <Link href={`/user/${review.buyer._id}`} className="font-bold text-gray-900 hover:text-primary transition-colors">
+                                        {review.buyer.name}
+                                    </Link>
+                                    <span className="text-xs text-gray-500">
+                                        {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true, locale: fr })}
+                                    </span>
                                 </div>
-                            )}
-                        </Link>
-                        <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                                <Link href={`/user/${review.buyer._id}`} className="font-bold text-gray-900 hover:text-primary transition-colors">
-                                    {review.buyer.name}
-                                </Link>
-                                <span className="text-xs text-gray-500">
-                                    {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true, locale: fr })}
-                                </span>
-                            </div>
-                            <div className="mb-2">
-                                <StarRating rating={review.rating} readOnly size={16} />
-                            </div>
-                            <p className="text-gray-600 text-sm leading-relaxed">{review.comment}</p>
-                            {review.ad && (
-                                <div className="mt-3 text-xs text-gray-400 bg-gray-50 p-2 rounded-lg inline-block">
-                                    Concerne l'annonce : <span className="font-medium text-gray-600">{review.ad.title}</span>
+                                <div className="mb-2">
+                                    <StarRating rating={review.rating} readOnly size={16} />
                                 </div>
-                            )}
+                                <p className="text-gray-600 text-sm leading-relaxed">{review.comment}</p>
+                                {review.ad && (
+                                    <div className="mt-3 text-xs text-gray-400 bg-gray-50 p-2 rounded-lg inline-block">
+                                        Concerne l'annonce : <span className="font-medium text-gray-600">{review.ad.title}</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                );
+            })}
 
             {hasMore && (
                 <button

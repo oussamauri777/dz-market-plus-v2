@@ -3,13 +3,16 @@
 import { Search, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
-import { useState } from 'react';
+import { getWilayas } from 'algeria-locations';
+import { useState, useMemo } from 'react';
 
 export default function Hero() {
     const t = useTranslations('HomePage');
     const router = useRouter();
     const [query, setQuery] = useState('');
     const [wilaya, setWilaya] = useState('');
+
+    const wilayas = useMemo(() => getWilayas(), []);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -61,10 +64,11 @@ export default function Hero() {
                                 className="block w-full pl-10 pr-8 py-3 border-none rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50 sm:bg-transparent appearance-none cursor-pointer"
                             >
                                 <option value="">Toute l'Algérie</option>
-                                <option value="Alger">Alger</option>
-                                <option value="Oran">Oran</option>
-                                <option value="Constantine">Constantine</option>
-                                {/* Add more wilayas as needed */}
+                                {wilayas.map((w: any) => (
+                                    <option key={w.code} value={w.name}>
+                                        {w.code} - {w.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <button

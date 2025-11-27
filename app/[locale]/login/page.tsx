@@ -1,22 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from '@/i18n/routing';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Loader2, Mail, Lock } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
     const t = useTranslations('Navigation');
     const locale = useLocale();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [data, setData] = useState({
         email: '',
         password: '',
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [infoMessage, setInfoMessage] = useState('');
+
+    useEffect(() => {
+        const message = searchParams.get('message');
+        if (message) {
+            setInfoMessage(decodeURIComponent(message));
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,7 +41,8 @@ export default function LoginPage() {
             if (res?.error) {
                 setError('Email ou mot de passe incorrect');
             } else {
-                router.push('/profile');
+                const redirect = searchParams.get('redirect') || '/profile';
+                router.push(redirect);
                 router.refresh();
             }
         } catch (error) {
@@ -53,6 +63,13 @@ export default function LoginPage() {
                         Bienvenue sur DZ Market Plus
                     </p>
                 </div>
+
+                {infoMessage && (
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-blue-700 text-sm">{infoMessage}</p>
+                    </div>
+                )}
 
                 {error && (
                     <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">

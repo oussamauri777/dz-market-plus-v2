@@ -45,10 +45,7 @@ export async function searchAds(params: SearchParams) {
 
     const pipeline: PipelineStage[] = [];
 
-    // 1. Match active ads
-    pipeline.push({ $match: { status: 'active' } });
-
-    // 2. Text Search
+    // 1. Text Search (Must be first)
     if (query) {
         pipeline.push({
             $match: {
@@ -56,6 +53,9 @@ export async function searchAds(params: SearchParams) {
             }
         });
     }
+
+    // 2. Match active ads
+    pipeline.push({ $match: { status: 'active' } });
 
     // 3. Filters
     if (category) {

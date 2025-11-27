@@ -9,7 +9,8 @@ const CONDITIONS = [
     { id: 'like-new', label: 'Comme neuf' },
     { id: 'good', label: 'Bon état' },
     { id: 'fair', label: 'État moyen' },
-    { id: 'broken', label: 'Pour pièces' },
+    { id: 'refurbished', label: 'Reconditionné' },
+    { id: 'for-parts', label: 'Pour pièces' },
 ];
 
 export default function ConditionFilter() {

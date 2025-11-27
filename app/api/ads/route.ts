@@ -12,9 +12,9 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const { title, description, price, category, subcategory, wilaya, images, location } = await req.json();
+        const { title, description, price, category, subcategory, wilaya, images, location, condition } = await req.json();
 
-        if (!title || !description || !price || !category || !subcategory || !wilaya) {
+        if (!title || !description || !price || !category || !subcategory || !wilaya || !location?.commune || !condition) {
             return new NextResponse("Missing fields", { status: 400 });
         }
 
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
             wilaya,
             images,
             location,
+            condition,
             user: session.user.id,
         });
 
@@ -44,6 +45,8 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const category = searchParams.get("category");
         const wilaya = searchParams.get("wilaya");
+        const commune = searchParams.get("commune");
+        const condition = searchParams.get("condition");
         const query = searchParams.get("query");
         const ids = searchParams.get("ids");
         const limit = parseInt(searchParams.get("limit") || "10");
@@ -68,6 +71,14 @@ export async function GET(req: Request) {
 
         if (wilaya) {
             filter.wilaya = wilaya;
+        }
+
+        if (commune) {
+            filter['location.commune'] = commune;
+        }
+
+        if (condition) {
+            filter.condition = condition;
         }
 
         if (query) {

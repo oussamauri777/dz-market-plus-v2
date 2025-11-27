@@ -1,28 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { CldUploadWidget } from 'next-cloudinary';
-import { Camera, MapPin, Tag, Type, FileText, DollarSign, X, UploadCloud, Layers } from 'lucide-react';
+import { Camera, MapPin, Tag, Type, FileText, DollarSign, X, UploadCloud, Layers, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { CATEGORIES } from '@/lib/constants/categories';
+import { getWilayas, getCommunesByWilayaId } from 'algeria-locations';
 
 const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
     ssr: false,
     loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">Loading Map...</div>
 });
 
-const WILAYAS = [
-    "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra", "Béchar",
-    "Blida", "Bouira", "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret", "Tizi Ouzou", "Alger",
-    "Djelfa", "Jijel", "Sétif", "Saïda", "Skikda", "Sidi Bel Abbès", "Annaba", "Guelma",
-    "Constantine", "Médéa", "Mostaganem", "M'Sila", "Mascara", "Ouargla", "Oran", "El Bayadh",
-    "Illizi", "Bordj Bou Arréridj", "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt", "El Oued",
-    "Khenchela", "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent",
-    "Ghardaïa", "Relizane", "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal", "Béni Abbès",
-    "In Salah", "In Guezzam", "Touggourt", "Djanet", "El M'Ghair", "El Meniaa"
+const CONDITIONS = [
+    { value: 'new', label: 'New' },
+    { value: 'like-new', label: 'Like New' },
+    { value: 'good', label: 'Good' },
+    { value: 'fair', label: 'Fair' },
+    { value: 'refurbished', label: 'Refurbished' },
+    { value: 'for-parts', label: 'For Parts' }
 ];
 
 export default function CreateAdPage() {
@@ -35,10 +34,20 @@ export default function CreateAdPage() {
         category: '',
         subcategory: '',
         wilaya: '',
+        commune: '',
+        condition: 'good',
         images: [] as string[],
         location: null as any,
     });
     const [loading, setLoading] = useState(false);
+
+    const wilayas = useMemo(() => getWilayas(), []);
+    const communes = useMemo(() => {
+        if (!data.wilaya) return [];
+        const selectedWilaya = wilayas.find(w => w.name === data.wilaya);
+        if (!selectedWilaya) return [];
+        return getCommunesByWilayaId(selectedWilaya.id) || [];
+    }, [data.wilaya, wilayas]);
 
     const selectedCategory = CATEGORIES.find(c => c.label === data.category);
 
@@ -47,12 +56,21 @@ export default function CreateAdPage() {
         setLoading(true);
 
         try {
+            const payload = {
+                ...data,
+                location: {
+                    ...data.location,
+                    wilaya: data.wilaya,
+                    commune: data.commune
+                }
+            };
+
             const res = await fetch('/api/ads', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify(payload),
             });
 
             if (res.ok) {
@@ -192,8 +210,8 @@ export default function CreateAdPage() {
                                 </div>
                             </div>
 
-                            {/* Wilaya & Price */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {/* Wilaya, Commune & Condition */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-900 mb-2">Wilaya</label>
                                     <div className="relative">
@@ -204,31 +222,78 @@ export default function CreateAdPage() {
                                             required
                                             className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white"
                                             value={data.wilaya}
-                                            onChange={(e) => setData({ ...data, wilaya: e.target.value })}
+                                            onChange={(e) => setData({ ...data, wilaya: e.target.value, commune: '' })}
                                         >
                                             <option value="">Sélectionner</option>
-                                            {WILAYAS.map(w => (
-                                                <option key={w} value={w}>{w}</option>
+                                            {wilayas.map((w: any) => (
+                                                <option key={w.code} value={w.name}>
+                                                    {w.code} - {w.name}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-2">Prix (DA)</label>
+                                    <label className="block text-sm font-bold text-gray-900 mb-2">Commune</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <DollarSign className="h-5 w-5 text-gray-400" />
+                                            <MapPin className="h-5 w-5 text-gray-400" />
                                         </div>
-                                        <input
-                                            type="number"
+                                        <select
                                             required
-                                            placeholder="0"
-                                            className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder-gray-400"
-                                            value={data.price}
-                                            onChange={(e) => setData({ ...data, price: e.target.value })}
-                                        />
+                                            disabled={!data.wilaya}
+                                            className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                                            value={data.commune}
+                                            onChange={(e) => setData({ ...data, commune: e.target.value })}
+                                        >
+                                            <option value="">Sélectionner</option>
+                                            {communes.map((c: any) => (
+                                                <option key={c.id || c.name} value={c.name}>
+                                                    {c.name}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-900 mb-2">État</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <AlertCircle className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                        <select
+                                            required
+                                            className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white"
+                                            value={data.condition}
+                                            onChange={(e) => setData({ ...data, condition: e.target.value })}
+                                        >
+                                            {CONDITIONS.map((c) => (
+                                                <option key={c.value} value={c.value}>
+                                                    {c.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Price */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-900 mb-2">Prix (DA)</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <DollarSign className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="number"
+                                        required
+                                        placeholder="0"
+                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder-gray-400"
+                                        value={data.price}
+                                        onChange={(e) => setData({ ...data, price: e.target.value })}
+                                    />
                                 </div>
                             </div>
 

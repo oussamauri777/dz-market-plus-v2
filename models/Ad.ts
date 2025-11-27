@@ -49,7 +49,7 @@ const AdSchema = new Schema({
     },
     condition: {
         type: String,
-        enum: ['new', 'like-new', 'good', 'fair', 'broken'],
+        enum: ['new', 'like-new', 'good', 'fair', 'refurbished', 'for-parts'],
         default: 'good',
     },
     views: {

@@ -64,12 +64,13 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const sellerId = searchParams.get("sellerId");
         const buyerId = searchParams.get("buyerId");
+        const adId = searchParams.get("adId");
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "5");
         const skip = (page - 1) * limit;
 
-        if (!sellerId && !buyerId) {
-            return NextResponse.json({ error: "Seller ID or Buyer ID required" }, { status: 400 });
+        if (!sellerId && !buyerId && !adId) {
+            return NextResponse.json({ error: "Seller ID, Buyer ID or Ad ID required" }, { status: 400 });
         }
 
         await dbConnect();
@@ -77,6 +78,7 @@ export async function GET(req: Request) {
         const filter: any = {};
         if (sellerId) filter.seller = sellerId;
         if (buyerId) filter.buyer = buyerId;
+        if (adId) filter.ad = adId;
 
         const reviews = await Review.find(filter)
             .sort({ createdAt: -1 })

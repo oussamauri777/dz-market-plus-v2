@@ -22,6 +22,7 @@ interface Ad {
     category: string;
     wilaya: string;
     images: string[];
+    condition: string;
     user: {
         _id: string;
         name: string;
@@ -39,6 +40,15 @@ interface Ad {
         commune: string;
     };
 }
+
+const CONDITION_LABELS: { [key: string]: string } = {
+    'new': 'Neuf',
+    'like-new': 'Comme neuf',
+    'good': 'Bon état',
+    'fair': 'État moyen',
+    'refurbished': 'Reconditionné',
+    'for-parts': 'Pour pièces'
+};
 
 export default function AdDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { data: session } = useSession();
@@ -215,8 +225,20 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
                                 <div className="flex items-center p-3 bg-gray-50 rounded-xl">
                                     <MapPin className="w-5 h-5 text-gray-400 mr-3" />
                                     <div>
-                                        <p className="text-xs text-gray-500">Wilaya</p>
-                                        <p className="text-sm font-medium text-gray-900">{ad.wilaya}</p>
+                                        <p className="text-xs text-gray-500">Localisation</p>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {ad.wilaya}
+                                            {ad.location?.commune && ` - ${ad.location.commune}`}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center p-3 bg-gray-50 rounded-xl">
+                                    <ShieldCheck className="w-5 h-5 text-gray-400 mr-3" />
+                                    <div>
+                                        <p className="text-xs text-gray-500">État</p>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {CONDITION_LABELS[ad.condition] || ad.condition}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center p-3 bg-gray-50 rounded-xl">

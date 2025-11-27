@@ -1,21 +1,23 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useRouter } from '@/i18n/routing';
-
-const WILAYAS = [
-    'Adrar', 'Chlef', 'Laghouat', 'Oum El Bouaghi', 'Batna', 'Béjaïa', 'Biskra', 'Béchar',
-    'Blida', 'Bouira', 'Tamanrasset', 'Tébessa', 'Tlemcen', 'Tiaret', 'Tizi Ouzou', 'Alger',
-    'Djelfa', 'Jijel', 'Sétif', 'Saïda', 'Skikda', 'Sidi Bel Abbès', 'Annaba', 'Guelma',
-    'Constantine', 'Médéa', 'Mostaganem', 'M\'Sila', 'Mascara', 'Ouargla', 'Oran'
-].sort();
+import { getWilayas, getCommunesByWilayaId } from 'algeria-locations';
 
 export default function LocationFilter() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentWilaya = searchParams.get('wilaya');
     const currentCommune = searchParams.get('commune');
+
+    const wilayas = useMemo(() => getWilayas(), []);
+    const communes = useMemo(() => {
+        if (!currentWilaya) return [];
+        const selectedWilaya = wilayas.find(w => w.name === currentWilaya);
+        if (!selectedWilaya) return [];
+        return getCommunesByWilayaId(selectedWilaya.id) || [];
+    }, [currentWilaya, wilayas]);
 
     const updateParam = useCallback((key: string, value: string) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -24,6 +26,12 @@ export default function LocationFilter() {
         } else {
             params.delete(key);
         }
+
+        // Reset commune if wilaya changes
+        if (key === 'wilaya') {
+            params.delete('commune');
+        }
+
         params.set('page', '1');
         router.push(`?${params.toString()}`);
     }, [searchParams, router]);
@@ -40,20 +48,28 @@ export default function LocationFilter() {
                         className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                     >
                         <option value="">Toutes les wilayas</option>
-                        {WILAYAS.map((w) => (
-                            <option key={w} value={w}>{w}</option>
+                        {wilayas.map((w) => (
+                            <option key={w.code} value={w.name}>
+                                {w.code} - {w.name}
+                            </option>
                         ))}
                     </select>
                 </div>
                 <div>
                     <label className="text-xs text-gray-500 mb-1 block">Commune</label>
-                    <input
-                        type="text"
-                        placeholder="Commune..."
+                    <select
                         value={currentCommune || ''}
                         onChange={(e) => updateParam('commune', e.target.value)}
-                        className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                    />
+                        disabled={!currentWilaya}
+                        className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none disabled:bg-gray-50 disabled:text-gray-400"
+                    >
+                        <option value="">Toutes les communes</option>
+                        {communes.map((c) => (
+                            <option key={c.id || c.name} value={c.name}>
+                                {c.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
             </div>
         </div>

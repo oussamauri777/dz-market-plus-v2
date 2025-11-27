@@ -23,11 +23,11 @@ export default function ReviewSection({ targetUserId, adId, sellerName }: Review
 
     return (
         <div className="mt-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-6">Seller Reviews</h2>
+            <h2 className="text-2xl font-bold mb-6">Avis sur le produit</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                    <ReviewList key={refreshKey} sellerId={targetUserId} />
+                    <ReviewList key={refreshKey} adId={adId} />
                 </div>
 
                 <div>

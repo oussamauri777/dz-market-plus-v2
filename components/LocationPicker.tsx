@@ -45,20 +45,26 @@ function LocationMarker({ position, setPosition, onLocationFound }: any) {
 function MapUpdater({ center }: { center: [number, number] }) {
     const map = useMap();
     useEffect(() => {
-        map.flyTo(center, 13);
+        if (center && typeof center[0] === 'number' && typeof center[1] === 'number') {
+            map.flyTo(center, 13);
+        }
     }, [center, map]);
     return null;
 }
 
 export default function LocationPicker({ onLocationSelect, initialLocation }: LocationPickerProps) {
-    const [position, setPosition] = useState<any>(initialLocation ? { lat: initialLocation.latitude, lng: initialLocation.longitude } : null);
+    const [position, setPosition] = useState<any>(
+        initialLocation && initialLocation.latitude && initialLocation.longitude
+            ? { lat: initialLocation.latitude, lng: initialLocation.longitude }
+            : null
+    );
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [mapCenter, setMapCenter] = useState<[number, number]>([36.752887, 3.042048]); // Default to Algiers
 
     useEffect(() => {
-        if (initialLocation) {
+        if (initialLocation && initialLocation.latitude && initialLocation.longitude) {
             setMapCenter([initialLocation.latitude, initialLocation.longitude]);
         } else {
             // Try to get user's current location
@@ -178,7 +184,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
                 </MapContainer>
             </div>
 
-            {position && (
+            {position && typeof position.lat === 'number' && typeof position.lng === 'number' && (
                 <div className="text-sm text-gray-500 flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
                     <span>Selected: {position.lat.toFixed(6)}, {position.lng.toFixed(6)}</span>

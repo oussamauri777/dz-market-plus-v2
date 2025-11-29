@@ -82,13 +82,18 @@ export default function Hero() {
 
                 {/* Quick Categories Chips */}
                 <div className="mt-8 flex flex-wrap justify-center gap-2">
-                    {['Voitures', 'Immobilier', 'Téléphones', 'Meubles'].map((cat) => (
+                    {[
+                        { label: 'Voitures', href: `/search?category=${encodeURIComponent('Véhicules')}&subcategory=${encodeURIComponent('Voitures')}` },
+                        { label: 'Immobilier', href: `/search?category=${encodeURIComponent('Immobilier')}` },
+                        { label: 'Téléphones', href: `/search?category=${encodeURIComponent('Informatique & Multimédia')}&subcategory=${encodeURIComponent('Téléphones')}` },
+                        { label: 'Meubles', href: `/search?category=${encodeURIComponent('Maison & Jardin')}&subcategory=${encodeURIComponent('Meubles')}` }
+                    ].map((item) => (
                         <button
-                            key={cat}
-                            onClick={() => router.push(`/search?category=${cat}`)}
+                            key={item.label}
+                            onClick={() => router.push(item.href)}
                             className="bg-white text-gray-600 hover:text-primary hover:bg-blue-50 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border border-gray-200 shadow-sm"
                         >
-                            {cat}
+                            {item.label}
                         </button>
                     ))}
                 </div>

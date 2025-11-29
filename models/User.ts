@@ -13,7 +13,7 @@ const UserSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['buyer', 'seller', 'admin'],
+        enum: ['buyer', 'seller', 'admin', 'user'],
         default: 'buyer',
     },
     password: {
@@ -51,6 +51,17 @@ const UserSchema = new Schema({
         type: [Schema.Types.ObjectId],
         ref: 'Ad',
         default: [],
+    },
+    resetPasswordToken: {
+        type: String,
+        required: false,
+    },
+    resetPasswordExpires: {
+        type: Date,
+        required: false,
+    },
+    lastPostDate: {
+        type: Date,
     },
 }, { timestamps: true });
 

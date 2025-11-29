@@ -60,7 +60,7 @@ export async function PATCH(req: Request) {
         };
 
         if (readMessages.length > 0) {
-            await pusherServer.trigger(conversationId, 'messages_read', {
+            await pusherServer.trigger(`private-${conversationId}`, 'messages_read', {
                 conversationId,
                 messageIds: response.messageIds,
             });

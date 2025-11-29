@@ -1,6 +1,6 @@
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
-import { MapPin, Clock } from 'lucide-react';
+import { MapPin, Clock, Eye } from 'lucide-react';
 import FavoriteButton from './FavoriteButton';
 
 interface AdCardProps {
@@ -11,6 +11,8 @@ interface AdCardProps {
         images: string[];
         wilaya: string;
         createdAt: string;
+        status?: string;
+        views?: number;
     };
 }
 
@@ -21,8 +23,14 @@ export default function AdCard({ ad }: AdCardProps) {
                 <FavoriteButton adId={ad._id} />
             </div>
 
+            {ad.status === 'sold' && (
+                <div className="absolute top-3 left-3 z-20 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md shadow-sm uppercase tracking-wider">
+                    Vendu
+                </div>
+            )}
+
             <Link href={`/ads/${ad._id}`} className="block h-full">
-                <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full flex flex-col">
+                <div className={`bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full flex flex-col ${ad.status === 'sold' ? 'opacity-75 grayscale-[0.5]' : ''}`}>
                     {/* Image Container */}
                     <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                         {ad.images[0] ? (
@@ -54,12 +62,18 @@ export default function AdCard({ ad }: AdCardProps) {
                             <p className="text-lg font-bold text-primary">
                                 {ad.price.toLocaleString()} DA
                             </p>
-                            <div className="flex items-center text-xs text-gray-400">
-                                <Clock className="w-3 h-3 mr-1" />
-                                {new Date(ad.createdAt).toLocaleDateString('fr-FR', {
-                                    day: 'numeric',
-                                    month: 'short'
-                                })}
+                            <div className="flex items-center text-xs text-gray-400 gap-3">
+                                <div className="flex items-center">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    {new Date(ad.createdAt).toLocaleDateString('fr-FR', {
+                                        day: 'numeric',
+                                        month: 'short'
+                                    })}
+                                </div>
+                                <div className="flex items-center">
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    {ad.views || 0}
+                                </div>
                             </div>
                         </div>
                     </div>

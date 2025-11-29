@@ -1,0 +1,23 @@
+[2025-11-28T14:43:01.048Z] [FORGOT_PASSWORD] Generating token for: "ous7villa78@gmail.com"
+[2025-11-28T14:43:01.049Z] [FORGOT_PASSWORD] Raw token: "c3f41c2c2eb19eaaf20ac8ccb359e4aef7254308a4ce3770bc2e69c9e9b9a8dc"
+[2025-11-28T14:43:01.099Z] [FORGOT_PASSWORD] Hashed token: "8494a530a843b16982fad0188571aef08633883e4caef4a651a1240a857f584b"
+[2025-11-28T14:43:01.215Z] [FORGOT_PASSWORD] Expires at: "2025-11-28T15:43:01.048Z"
+[2025-11-28T14:43:01.497Z] [FORGOT_PASSWORD] Update result: {"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}
+[2025-11-28T14:43:24.039Z] [RESET_PASSWORD] Received token: "c3f41c2c2eb19eaaf20ac8ccb359e4aef7254308a4ce3770bc2e69c9e9b9a8dc"
+[2025-11-28T14:43:24.040Z] [RESET_PASSWORD] Hashed token: "8494a530a843b16982fad0188571aef08633883e4caef4a651a1240a857f584b"
+[2025-11-28T14:43:24.041Z] [RESET_PASSWORD] Checking for user with hash and expiry > 1764341004041
+[2025-11-28T14:43:24.300Z] [RESET_PASSWORD] No user found with this token. 
+[2025-11-28T14:50:26.900Z] [FORGOT_PASSWORD] Generating token for: "ous7villa78@gmail.com"
+[2025-11-28T14:50:26.902Z] [FORGOT_PASSWORD] Raw token: "28c882ab48131d025b8b8f4cb4f56324cc47e5eeefad8bb2c7227047f704bc5a"
+[2025-11-28T14:50:26.903Z] [FORGOT_PASSWORD] Hashed token: "afbe98e8166b7ee8437770abd32e0461a9e78d4feb040a5cb7db534dfb2900af"
+[2025-11-28T14:50:26.904Z] [FORGOT_PASSWORD] Expires at: "2025-11-28T15:50:26.900Z"
+[2025-11-28T14:50:27.067Z] [FORGOT_PASSWORD] Update result: {"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}
+[2025-11-28T14:51:02.429Z] [RESET_PASSWORD] Received token: "28c882ab48131d025b8b8f4cb4f56324cc47e5eeefad8bb2c7227047f704bc5a"
+[2025-11-28T14:51:02.432Z] [RESET_PASSWORD] Hashed token: "afbe98e8166b7ee8437770abd32e0461a9e78d4feb040a5cb7db534dfb2900af"
+[2025-11-28T14:51:02.433Z] [RESET_PASSWORD] Checking for user with hash and expiry > 1764341462433
+[2025-11-28T14:51:02.540Z] [RESET_PASSWORD] User found: "ous7villa78@gmail.com"
+[2025-11-28T15:23:32.096Z] [FORGOT_PASSWORD] Generating token for: "elmajhoultech@gmail.com"
+[2025-11-28T15:23:32.098Z] [FORGOT_PASSWORD] Raw token: "281a237b0109f93b1366256aae42ec35bece626c4c6061a27e9a5588767403f6"
+[2025-11-28T15:23:32.099Z] [FORGOT_PASSWORD] Hashed token: "5b47456419924593e382f4bc87bf047c0f3a54d0424d51592dff83976e6982c1"
+[2025-11-28T15:23:32.100Z] [FORGOT_PASSWORD] Expires at: "2025-11-28T16:23:32.096Z"
+[2025-11-28T15:23:32.213Z] [FORGOT_PASSWORD] Update result: {"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}

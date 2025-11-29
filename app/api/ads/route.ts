@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Ad from "@/models/Ad";
+import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -18,7 +19,24 @@ export async function POST(req: Request) {
             return new NextResponse("Missing fields", { status: 400 });
         }
 
+        // Validate image count
+        if (images && images.length > 10) {
+            return new NextResponse("Too many images (max 10)", { status: 400 });
+        }
+
         await dbConnect();
+
+        // Rate limiting
+        const user = await User.findById(session.user.id);
+        if (user.lastPostDate) {
+            const lastPost = new Date(user.lastPostDate).getTime();
+            const now = Date.now();
+            const cooldown = 2 * 60 * 1000; // 2 minutes
+
+            if (now - lastPost < cooldown) {
+                return new NextResponse("Veuillez patienter quelques minutes avant de publier une nouvelle annonce", { status: 429 });
+            }
+        }
 
         const ad = await Ad.create({
             title,
@@ -32,6 +50,9 @@ export async function POST(req: Request) {
             condition,
             user: session.user.id,
         });
+
+        // Update user's last post date
+        await User.findByIdAndUpdate(session.user.id, { lastPostDate: new Date() });
 
         return NextResponse.json(ad);
     } catch (error) {
@@ -50,11 +71,18 @@ export async function GET(req: Request) {
         const query = searchParams.get("query");
         const ids = searchParams.get("ids");
         const limit = parseInt(searchParams.get("limit") || "10");
+        const status = searchParams.get("status");
 
         await dbConnect();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const filter: any = { status: 'active' };
+        const filter: any = {};
+
+        if (status) {
+            filter.status = { $in: status.split(',') };
+        } else {
+            filter.status = 'active';
+        }
 
         if (ids) {
             filter._id = { $in: ids.split(',') };

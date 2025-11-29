@@ -6,11 +6,12 @@ import { useRouter, usePathname } from '@/i18n/routing';
 import { MessageCircle, Search } from 'lucide-react';
 import Pusher from 'pusher-js';
 import { useRef } from 'react';
+import Image from 'next/image';
 
 interface Conversation {
     _id: string;
-    participants: Array<{ _id: string; name: string }>;
-    ad: { _id: string; title: string };
+    participants: Array<{ _id: string; name: string; image?: string }>;
+    ad: { _id: string; title: string } | null;
     lastMessage: string;
     lastMessageAt: string;
     unreadCount?: number;
@@ -85,6 +86,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
         if (!pusherRef.current) {
             pusherRef.current = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
                 cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+                authEndpoint: '/api/pusher/auth',
             });
         }
 
@@ -103,7 +105,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
         const pusher = pusherRef.current;
 
         conversations.forEach((conv) => {
-            const channel = pusher.subscribe(conv._id);
+            const channel = pusher.subscribe(`private-${conv._id}`);
             channel.unbind_all();
             channel.bind('receive_message', handleReceiveMessage);
             channel.bind('messages_read', handleMessagesRead);
@@ -111,7 +113,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
 
         return () => {
             conversations.forEach((conv) => {
-                pusher.unsubscribe(conv._id);
+                pusher.unsubscribe(`private-${conv._id}`);
             });
         };
     }, [conversations, pathname, session]);
@@ -127,7 +129,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
     const filteredConversations = conversations.filter(conv => {
         const otherUser = getOtherParticipant(conv);
         return otherUser?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            conv.ad.title.toLowerCase().includes(searchTerm.toLowerCase());
+            (conv.ad?.title && conv.ad.title.toLowerCase().includes(searchTerm.toLowerCase()));
     });
 
     const isChatOpen = pathname?.includes('/messages/') && !pathname?.endsWith('/messages');
@@ -181,8 +183,18 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="relative">
-                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold text-lg border border-gray-100 shadow-sm">
-                                                    {otherUser?.name?.charAt(0).toUpperCase() || 'U'}
+                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold text-lg border border-gray-100 shadow-sm overflow-hidden">
+                                                    {otherUser?.image ? (
+                                                        <Image
+                                                            src={otherUser.image}
+                                                            alt={otherUser.name || 'User'}
+                                                            width={48}
+                                                            height={48}
+                                                            className="object-cover w-full h-full"
+                                                        />
+                                                    ) : (
+                                                        <span>{otherUser?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                                                    )}
                                                 </div>
                                                 {/* Online indicator could go here */}
                                             </div>
@@ -200,7 +212,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
                                                     </span>
                                                 </div>
                                                 <p className="text-xs text-gray-500 truncate mb-1 font-medium bg-gray-50 inline-block px-2 py-0.5 rounded-md">
-                                                    {conv.ad.title}
+                                                    {conv.ad?.title || 'Annonce supprimée'}
                                                 </p>
                                                 <div className="flex justify-between items-center">
                                                     <p className={`text-sm truncate ${conv.unreadCount && conv.unreadCount > 0 ? 'font-bold text-gray-900' : 'text-gray-500'}`}>

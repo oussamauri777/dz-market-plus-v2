@@ -116,7 +116,7 @@ export async function POST(req: Request) {
 
 
         // Trigger Pusher event
-        await pusherServer.trigger(conversationId, 'receive_message', {
+        await pusherServer.trigger(`private-${conversationId}`, 'receive_message', {
             ...message.toObject(),
             _id: message._id.toString(),
             conversation: message.conversation.toString(),
@@ -175,7 +175,7 @@ export async function DELETE(req: Request) {
         await Message.findByIdAndDelete(messageId);
 
         // Trigger Pusher event
-        await pusherServer.trigger(message.conversation.toString(), 'message_deleted', messageId);
+        await pusherServer.trigger(`private-${message.conversation.toString()}`, 'message_deleted', messageId);
 
         return NextResponse.json({ success: true, messageId });
     } catch (error) {

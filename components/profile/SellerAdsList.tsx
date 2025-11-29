@@ -25,7 +25,7 @@ export default function SellerAdsList({ userId }: SellerAdsListProps) {
                 // Let's check /api/ads again. It supports category, wilaya, query, ids.
                 // I should add 'user' support to /api/ads/route.ts
 
-                const res = await fetch(`/api/ads?user=${userId}&limit=20`);
+                const res = await fetch(`/api/ads?user=${userId}&limit=20&status=active,sold`);
                 if (res.ok) {
                     const data = await res.json();
                     setAds(data);

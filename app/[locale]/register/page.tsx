@@ -24,9 +24,28 @@ export default function RegisterPage() {
         verificationCode: '',
     });
 
+    const validatePassword = (password: string) => {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+
+        if (password.length < minLength) return "Le mot de passe doit contenir au moins 8 caractères";
+        if (!hasUpperCase) return "Le mot de passe doit contenir au moins une majuscule";
+        if (!hasLowerCase) return "Le mot de passe doit contenir au moins une minuscule";
+        if (!hasNumber) return "Le mot de passe doit contenir au moins un chiffre";
+        return null;
+    };
+
     const handleSendCode = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        const passwordError = validatePassword(data.password);
+        if (passwordError) {
+            setError(passwordError);
+            return;
+        }
 
         if (data.password !== data.confirmPassword) {
             setError('Les mots de passe ne correspondent pas');
@@ -185,6 +204,16 @@ export default function RegisterPage() {
                                     value={data.confirmPassword}
                                     onChange={(e) => setData({ ...data, confirmPassword: e.target.value })}
                                 />
+                            </div>
+
+                            <div className="text-xs text-gray-500 space-y-1 pl-1">
+                                <p>Le mot de passe doit contenir :</p>
+                                <ul className="list-disc pl-4 space-y-0.5">
+                                    <li className={data.password.length >= 8 ? "text-green-600" : ""}>Au moins 8 caractères</li>
+                                    <li className={/[A-Z]/.test(data.password) ? "text-green-600" : ""}>Une majuscule</li>
+                                    <li className={/[a-z]/.test(data.password) ? "text-green-600" : ""}>Une minuscule</li>
+                                    <li className={/[0-9]/.test(data.password) ? "text-green-600" : ""}>Un chiffre</li>
+                                </ul>
                             </div>
                         </div>
 

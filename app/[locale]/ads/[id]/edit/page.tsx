@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from '@/i18n/routing';
-import { useTranslations } from 'next-intl';
+import { useSession } from 'next-auth/react';
+import { Loader2, Camera, X, MapPin, Tag, Type, FileText, DollarSign, Layers } from 'lucide-react';
 import { CldUploadWidget } from 'next-cloudinary';
-import { Camera, MapPin, Tag, Type, FileText, DollarSign, X, UploadCloud, Layers, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { CATEGORIES } from '@/lib/constants/categories';
@@ -16,18 +16,23 @@ const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
 });
 
 const CONDITIONS = [
-    { value: 'new', label: 'New' },
-    { value: 'like-new', label: 'Like New' },
-    { value: 'good', label: 'Good' },
-    { value: 'fair', label: 'Fair' },
-    { value: 'refurbished', label: 'Refurbished' },
-    { value: 'for-parts', label: 'For Parts' }
+    { value: 'new', label: 'Neuf' },
+    { value: 'like-new', label: 'Comme neuf' },
+    { value: 'good', label: 'Bon état' },
+    { value: 'fair', label: 'État moyen' },
+    { value: 'refurbished', label: 'Reconditionné' },
+    { value: 'for-parts', label: 'Pour pièces' }
 ];
 
-export default function CreateAdPage() {
-    const t = useTranslations('Common');
+export default function EditAdPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
-    const [data, setData] = useState({
+    const { data: session, status } = useSession();
+    const [adId, setAdId] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
+
+    const [formData, setFormData] = useState({
         title: '',
         description: '',
         price: '',
@@ -37,71 +42,135 @@ export default function CreateAdPage() {
         commune: '',
         condition: 'good',
         images: [] as string[],
-        location: null as any,
+        location: null as any
     });
-    const [loading, setLoading] = useState(false);
 
     const wilayas = useMemo(() => getWilayas(), []);
     const communes = useMemo(() => {
-        if (!data.wilaya) return [];
-        const selectedWilaya = wilayas.find(w => w.name === data.wilaya);
+        if (!formData.wilaya) return [];
+        const selectedWilaya = wilayas.find(w => w.name === formData.wilaya);
         if (!selectedWilaya) return [];
         return getCommunesByWilayaId(selectedWilaya.id) || [];
-    }, [data.wilaya, wilayas]);
+    }, [formData.wilaya, wilayas]);
 
-    const selectedCategory = CATEGORIES.find(c => c.label === data.category);
+    const selectedCategory = CATEGORIES.find(c => c.label === formData.category);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+    useEffect(() => {
+        params.then(({ id }) => {
+            setAdId(id);
+        });
+    }, [params]);
 
+    useEffect(() => {
+        if (status === 'unauthenticated') {
+            router.push('/login');
+        }
+    }, [status, router]);
+
+    useEffect(() => {
+        if (adId && session) {
+            fetchAd();
+        }
+    }, [adId, session]);
+
+    const fetchAd = async () => {
         try {
-            const payload = {
-                ...data,
-                location: {
-                    ...data.location,
-                    wilaya: data.wilaya,
-                    commune: data.commune
-                }
-            };
-
-            const res = await fetch('/api/ads', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
+            const res = await fetch(`/api/ads/${adId}`);
             if (res.ok) {
-                router.push('/profile');
-                router.refresh();
+                const ad = await res.json();
+
+                // Check if user owns this ad
+                if (ad.user._id !== session?.user?.id) {
+                    router.push(`/ads/${adId}`);
+                    return;
+                }
+
+                setFormData({
+                    title: ad.title,
+                    description: ad.description,
+                    price: ad.price.toString(),
+                    category: ad.category,
+                    subcategory: ad.subcategory || '',
+                    wilaya: ad.wilaya,
+                    commune: ad.location?.commune || '',
+                    condition: ad.condition || 'good',
+                    images: ad.images || [],
+                    location: ad.location || null
+                });
+            } else {
+                setError('Annonce non trouvée');
             }
         } catch (error) {
-            console.error(error);
+            setError('Erreur lors du chargement');
         } finally {
             setLoading(false);
         }
     };
 
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError('');
+
+        try {
+            const payload = {
+                ...formData,
+                price: parseFloat(formData.price),
+                location: {
+                    ...formData.location,
+                    wilaya: formData.wilaya,
+                    commune: formData.commune
+                }
+            };
+
+            const res = await fetch(`/api/ads/${adId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (res.ok) {
+                router.push(`/ads/${adId}`);
+            } else {
+                const data = await res.json();
+                setError(data.error || 'Erreur lors de la modification');
+            }
+        } catch (error) {
+            setError('Erreur lors de la modification');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const removeImage = (indexToRemove: number) => {
-        setData(prev => ({
+        setFormData(prev => ({
             ...prev,
             images: prev.images.filter((_, index) => index !== indexToRemove)
         }));
     };
 
+    if (status === 'loading' || loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
+        <div className="min-h-screen bg-gray-50 py-8 sm:py-12">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
                     <div className="bg-primary px-8 py-6">
-                        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                            <UploadCloud className="w-8 h-8" />
-                            Déposer une annonce
-                        </h1>
-                        <p className="text-primary-100 mt-2">Remplissez les détails ci-dessous pour publier votre annonce.</p>
+                        <h1 className="text-2xl font-bold text-white">Modifier l'annonce</h1>
+                        <p className="text-primary-100 mt-2">Mettez à jour les informations de votre annonce</p>
                     </div>
+
+                    {error && (
+                        <div className="m-8 bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+                            <p className="text-red-700 text-sm">{error}</p>
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="p-8 space-y-8">
                         {/* Photos Section */}
@@ -118,8 +187,8 @@ export default function CreateAdPage() {
                                         sources: ['local', 'camera'],
                                     }}
                                     onSuccess={(result: any) => {
-                                        if (data.images.length >= 10) return;
-                                        setData((prev) => ({
+                                        if (formData.images.length >= 10) return;
+                                        setFormData((prev) => ({
                                             ...prev,
                                             images: [...prev.images, result.info.secure_url],
                                         }));
@@ -130,24 +199,24 @@ export default function CreateAdPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    if (data.images.length < 10) open();
+                                                    if (formData.images.length < 10) open();
                                                 }}
-                                                disabled={data.images.length >= 10}
-                                                className={`aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all group ${data.images.length >= 10
+                                                disabled={formData.images.length >= 10}
+                                                className={`aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all group ${formData.images.length >= 10
                                                     ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
                                                     : 'border-gray-300 text-gray-400 hover:border-primary hover:text-primary hover:bg-gray-50'
                                                     }`}
                                             >
                                                 <Camera className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
                                                 <span className="text-xs font-medium">
-                                                    {data.images.length >= 10 ? 'Max atteint' : 'Ajouter'}
+                                                    {formData.images.length >= 10 ? 'Max atteint' : 'Ajouter'}
                                                 </span>
                                             </button>
                                         );
                                     }}
                                 </CldUploadWidget>
 
-                                {data.images.map((img, index) => (
+                                {formData.images.map((img, index) => (
                                     <div key={index} className="relative aspect-square rounded-2xl overflow-hidden group border border-gray-200">
                                         <Image src={img} alt="Uploaded" fill className="object-cover" />
                                         <button
@@ -174,10 +243,10 @@ export default function CreateAdPage() {
                                     <input
                                         type="text"
                                         required
-                                        placeholder="Ex: iPhone 13 Pro Max 256Go"
-                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder-gray-400"
-                                        value={data.title}
-                                        onChange={(e) => setData({ ...data, title: e.target.value })}
+                                        placeholder="Ex: iPhone 13 Pro Max 256GB"
+                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -193,8 +262,8 @@ export default function CreateAdPage() {
                                         <select
                                             required
                                             className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white"
-                                            value={data.category}
-                                            onChange={(e) => setData({ ...data, category: e.target.value, subcategory: '' })}
+                                            value={formData.category}
+                                            onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
                                         >
                                             <option value="">Sélectionner</option>
                                             {CATEGORIES.map(cat => (
@@ -212,10 +281,10 @@ export default function CreateAdPage() {
                                         </div>
                                         <select
                                             required
-                                            disabled={!data.category}
+                                            disabled={!formData.category}
                                             className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white disabled:bg-gray-50 disabled:text-gray-400"
-                                            value={data.subcategory}
-                                            onChange={(e) => setData({ ...data, subcategory: e.target.value })}
+                                            value={formData.subcategory}
+                                            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
                                         >
                                             <option value="">Sélectionner</option>
                                             {selectedCategory?.subcategories.map(sub => (
@@ -237,8 +306,8 @@ export default function CreateAdPage() {
                                         <select
                                             required
                                             className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white"
-                                            value={data.wilaya}
-                                            onChange={(e) => setData({ ...data, wilaya: e.target.value, commune: '' })}
+                                            value={formData.wilaya}
+                                            onChange={(e) => setFormData({ ...formData, wilaya: e.target.value, commune: '' })}
                                         >
                                             <option value="">Sélectionner</option>
                                             {wilayas.map((w: any) => (
@@ -258,16 +327,14 @@ export default function CreateAdPage() {
                                         </div>
                                         <select
                                             required
-                                            disabled={!data.wilaya}
+                                            disabled={!formData.wilaya}
                                             className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white disabled:bg-gray-50 disabled:text-gray-400"
-                                            value={data.commune}
-                                            onChange={(e) => setData({ ...data, commune: e.target.value })}
+                                            value={formData.commune}
+                                            onChange={(e) => setFormData({ ...formData, commune: e.target.value })}
                                         >
                                             <option value="">Sélectionner</option>
                                             {communes.map((c: any) => (
-                                                <option key={c.id || c.name} value={c.name}>
-                                                    {c.name}
-                                                </option>
+                                                <option key={c.id} value={c.name}>{c.name}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -275,41 +342,16 @@ export default function CreateAdPage() {
 
                                 <div>
                                     <label className="block text-sm font-bold text-gray-900 mb-2">État</label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <AlertCircle className="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <select
-                                            required
-                                            className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white"
-                                            value={data.condition}
-                                            onChange={(e) => setData({ ...data, condition: e.target.value })}
-                                        >
-                                            {CONDITIONS.map((c) => (
-                                                <option key={c.value} value={c.value}>
-                                                    {c.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Price */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-2">Prix (DA)</label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <DollarSign className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                    <input
-                                        type="number"
+                                    <select
                                         required
-                                        placeholder="0"
-                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder-gray-400"
-                                        value={data.price}
-                                        onChange={(e) => setData({ ...data, price: e.target.value })}
-                                    />
+                                        value={formData.condition}
+                                        onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                                        className="block w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none bg-white"
+                                    >
+                                        {CONDITIONS.map((cond) => (
+                                            <option key={cond.value} value={cond.value}>{cond.label}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 
@@ -323,49 +365,66 @@ export default function CreateAdPage() {
                                     <textarea
                                         required
                                         rows={6}
-                                        placeholder="Décrivez votre produit en détail..."
-                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder-gray-400 resize-none"
-                                        value={data.description}
-                                        onChange={(e) => setData({ ...data, description: e.target.value })}
+                                        placeholder="Décrivez votre article en détail..."
+                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     />
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Location Section */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-900 mb-2">Localisation</label>
-                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            {/* Price */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-900 mb-2">Prix (DZD)</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <DollarSign className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                        value={formData.price}
+                                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Location Picker */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-900 mb-2">Localisation sur la carte</label>
                                 <LocationPicker
-                                    onLocationSelect={(loc) => {
-                                        setData(prev => ({ ...prev, location: loc, wilaya: loc.wilaya || prev.wilaya }));
-                                    }}
+                                    onLocationSelect={(location) => setFormData({ ...formData, location })}
+                                    initialLocation={formData.location}
                                 />
+                                <p className="text-xs text-gray-500 mt-2">Cliquez sur la carte pour définir votre localisation exacte (optionnel)</p>
                             </div>
                         </div>
 
-                        <div className="pt-4">
+                        {/* Buttons */}
+                        <div className="flex gap-4 pt-4">
+                            <button
+                                type="button"
+                                onClick={() => router.back()}
+                                className="flex-1 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-bold hover:border-gray-300 transition-all"
+                            >
+                                Annuler
+                            </button>
                             <button
                                 type="submit"
-                                disabled={loading}
-                                className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all disabled:opacity-70 disabled:cursor-not-allowed hover:scale-[1.02]"
+                                disabled={submitting}
+                                className="flex-1 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                             >
-                                {loading ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                        Publication en cours...
-                                    </>
-                                ) : (
-                                    <>
-                                        <UploadCloud className="w-6 h-6" />
-                                        Publier l'annonce
-                                    </>
-                                )}
+                                {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
+                                {submitting ? 'Enregistrement...' : 'Enregistrer les modifications'}
                             </button>
                         </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+                    </form >
+                </div >
+            </div >
+        </div >
     );
 }

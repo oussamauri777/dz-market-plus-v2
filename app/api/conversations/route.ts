@@ -20,7 +20,7 @@ export async function GET() {
         const conversations = await Conversation.find({
             participants: session.user.id,
         })
-            .populate('participants', 'name email')
+            .populate('participants', 'name email image')
             .populate('ad', 'title images')
             .sort({ lastMessageAt: -1 })
             .lean();
@@ -42,10 +42,10 @@ export async function GET() {
                         ...p,
                         _id: p._id.toString(),
                     })),
-                    ad: {
+                    ad: conv.ad ? {
                         ...conv.ad,
                         _id: (conv.ad as any)._id.toString(),
-                    },
+                    } : null,
                     unreadCount,
                 };
             })

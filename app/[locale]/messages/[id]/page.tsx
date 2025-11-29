@@ -25,7 +25,7 @@ interface Message {
 
 interface Conversation {
     _id: string;
-    participants: Array<{ _id: string; name: string }>;
+    participants: Array<{ _id: string; name: string; image?: string }>;
     ad: { _id: string; title: string; price: number; images: string[] };
 }
 
@@ -41,8 +41,14 @@ export default function ChatPage() {
     const [newMessage, setNewMessage] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isTyping, setIsTyping] = useState(false);
+    const [otherUserOnline, setOtherUserOnline] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const channelRef = useRef<any>(null);
+    const presenceChannelRef = useRef<any>(null);
+    const conversationRef = useRef<Conversation | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -59,6 +65,42 @@ export default function ChatPage() {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    // Unlock AudioContext on user interaction
+    useEffect(() => {
+        const unlockAudio = () => {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioContext) {
+                if (!(window as any).audioCtx) {
+                    (window as any).audioCtx = new AudioContext();
+                }
+                const ctx = (window as any).audioCtx;
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+            }
+            // Remove listeners once unlocked
+            if ((window as any).audioCtx && (window as any).audioCtx.state === 'running') {
+                document.removeEventListener('mousedown', unlockAudio);
+                document.removeEventListener('keydown', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+            }
+        };
+
+        document.addEventListener('mousedown', unlockAudio);
+        document.addEventListener('keydown', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+
+        return () => {
+            document.removeEventListener('mousedown', unlockAudio);
+            document.removeEventListener('keydown', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+        };
+    }, []);
+
+    useEffect(() => {
+        conversationRef.current = conversation;
+    }, [conversation]);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -118,19 +160,131 @@ export default function ChatPage() {
 
             const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
                 cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+                authEndpoint: '/api/pusher/auth',
             });
 
-            const channel = pusher.subscribe(conversationId);
+            // Subscribe to private channel for messages
+            const messageChannel = pusher.subscribe(`private-${conversationId}`);
+            channelRef.current = messageChannel;
 
-            channel.bind('receive_message', handleReceiveMessage);
-            channel.bind('message_deleted', handleMessageDeleted);
-            channel.bind('messages_read', handleMessagesRead);
+            messageChannel.bind('receive_message', handleReceiveMessage);
+            messageChannel.bind('message_deleted', handleMessageDeleted);
+            messageChannel.bind('messages_read', handleMessagesRead);
+
+            // Subscribe to presence channel for online status and typing
+            const presenceChannel = pusher.subscribe(`presence-${conversationId}`);
+
+            // Handle presence events
+            presenceChannel.bind('pusher:subscription_succeeded', (members: any) => {
+                const currentConv = conversationRef.current;
+                const otherUser = currentConv?.participants.find((p) => p._id !== session?.user?.id);
+                if (otherUser) {
+                    setOtherUserOnline(members.get(otherUser._id) !== null);
+                }
+            });
+
+            presenceChannel.bind('pusher:member_added', (member: any) => {
+                const currentConv = conversationRef.current;
+                const otherUser = currentConv?.participants.find((p) => p._id !== session?.user?.id);
+                if (otherUser && member.id === otherUser._id) {
+                    setOtherUserOnline(true);
+                }
+            });
+
+            presenceChannel.bind('pusher:member_removed', (member: any) => {
+                const currentConv = conversationRef.current;
+                const otherUser = currentConv?.participants.find((p) => p._id !== session?.user?.id);
+                if (otherUser && member.id === otherUser._id) {
+                    setOtherUserOnline(false);
+                }
+            });
+
+            // Handle typing events on presence channel
+            presenceChannel.bind('client-typing', (data: { userId: string; typing: boolean }) => {
+                if (data.userId !== session.user.id) {
+                    setIsTyping(data.typing);
+
+                    // Play/Stop typing sound
+                    if (data.typing) {
+                        if (!(window as any).typingInterval) {
+                            // Use the globally unlocked context if available
+                            const ctx = (window as any).audioCtx;
+
+                            if (ctx && ctx.state === 'running') {
+                                // Function to play a single keypress sound
+                                const playKeypress = () => {
+                                    const t = ctx.currentTime;
+                                    const osc = ctx.createOscillator();
+                                    const gain = ctx.createGain();
+
+                                    osc.connect(gain);
+                                    gain.connect(ctx.destination);
+
+                                    // Messenger-style soft "pop" / bubble sound
+                                    const startFreq = 700 + Math.random() * 100;
+                                    const endFreq = 300 + Math.random() * 50;
+
+                                    osc.type = 'sine'; // Soft tone
+
+                                    // Pitch drop for "bubble" effect
+                                    osc.frequency.setValueAtTime(startFreq, t);
+                                    osc.frequency.exponentialRampToValueAtTime(endFreq, t + 0.08);
+
+                                    // Smooth envelope
+                                    gain.gain.setValueAtTime(0, t);
+                                    gain.gain.linearRampToValueAtTime(0.08, t + 0.01);
+                                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+
+                                    osc.start(t);
+                                    osc.stop(t + 0.08);
+                                };
+
+                                // Play immediately
+                                playKeypress();
+
+                                // Loop random keypresses
+                                (window as any).typingInterval = setInterval(() => {
+                                    if (Math.random() > 0.3) playKeypress(); // Random gaps
+                                }, 150);
+                            }
+                        }
+                    } else {
+                        if ((window as any).typingInterval) {
+                            clearInterval((window as any).typingInterval);
+                            (window as any).typingInterval = null;
+                        }
+                    }
+                }
+            });
+
+            presenceChannelRef.current = presenceChannel;
 
             return () => {
-                pusher.unsubscribe(conversationId);
+                // Cleanup audio
+                if ((window as any).typingInterval) {
+                    clearInterval((window as any).typingInterval);
+                    (window as any).typingInterval = null;
+                }
+                if ((window as any).audioCtx) {
+                    (window as any).audioCtx.close();
+                    (window as any).audioCtx = null;
+                }
+                pusher.unsubscribe(`private-${conversationId}`);
+                pusher.unsubscribe(`presence-${conversationId}`);
             };
         }
     }, [status, conversationId]);
+
+    // Check online status when conversation data loads
+    useEffect(() => {
+        if (conversation && presenceChannelRef.current) {
+            const otherUser = getOtherParticipant();
+            if (otherUser) {
+                const member = presenceChannelRef.current.members.get(otherUser._id);
+                setOtherUserOnline(member !== null);
+            }
+        }
+    }, [conversation]);
 
     const fetchConversation = async () => {
         try {
@@ -253,6 +407,21 @@ export default function ChatPage() {
         return conversation?.participants.find((p) => p._id !== session?.user?.id);
     };
 
+    const handleTyping = (channel: any) => {
+        // Trigger typing event
+        channel.trigger('client-typing', { userId: session?.user?.id, typing: true });
+
+        // Clear existing timeout
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+
+        // Set timeout to stop typing after 1 second of inactivity
+        typingTimeoutRef.current = setTimeout(() => {
+            channel.trigger('client-typing', { userId: session?.user?.id, typing: false });
+        }, 1000);
+    };
+
     if (loading) {
         return (
             <div className="h-full flex items-center justify-center bg-[#efeae2]">
@@ -276,16 +445,26 @@ export default function ChatPage() {
                     </button>
 
                     <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-bold text-gray-600 border border-gray-100">
-                            {otherUser?.name?.charAt(0).toUpperCase() || 'U'}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-bold text-gray-600 border border-gray-100 overflow-hidden">
+                            {otherUser?.image ? (
+                                <Image
+                                    src={otherUser.image}
+                                    alt={otherUser.name || 'User'}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover w-full h-full"
+                                />
+                            ) : (
+                                <span>{otherUser?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                            )}
                         </div>
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                        <div className={`absolute bottom-0 right-0 w-3 h-3 ${otherUserOnline ? 'bg-green-500' : 'bg-gray-400'} border-2 border-white rounded-full`}></div>
                     </div>
 
                     <div>
                         <h2 className="font-bold text-gray-900 text-sm">{otherUser?.name || 'Utilisateur'}</h2>
                         <p className="text-xs text-gray-500 truncate max-w-[150px] sm:max-w-xs">
-                            {conversation?.ad.title}
+                            {isTyping ? 'En train d\'écrire...' : conversation?.ad.title}
                         </p>
                     </div>
                 </div>
@@ -435,7 +614,12 @@ export default function ChatPage() {
 
                         <textarea
                             value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
+                            onChange={(e) => {
+                                setNewMessage(e.target.value);
+                                if (presenceChannelRef.current && e.target.value.length > 0) {
+                                    handleTyping(presenceChannelRef.current);
+                                }
+                            }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();

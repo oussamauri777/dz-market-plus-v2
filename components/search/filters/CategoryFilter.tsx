@@ -10,17 +10,33 @@ export default function CategoryFilter() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentCategory = searchParams.get('category');
+    const currentSubcategory = searchParams.get('subcategory');
 
     const handleCategoryChange = useCallback((category: string) => {
         const params = new URLSearchParams(searchParams.toString());
         if (category === currentCategory) {
             params.delete('category');
+            params.delete('subcategory'); // Clear subcategory when removing category
         } else {
             params.set('category', category);
+            params.delete('subcategory'); // Clear subcategory when changing category
         }
         params.set('page', '1'); // Reset page
         router.push(`?${params.toString()}`);
     }, [searchParams, currentCategory, router]);
+
+    const handleSubcategoryChange = useCallback((category: string, subcategory: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('category', category);
+
+        if (subcategory === currentSubcategory) {
+            params.delete('subcategory');
+        } else {
+            params.set('subcategory', subcategory);
+        }
+        params.set('page', '1'); // Reset page
+        router.push(`?${params.toString()}`);
+    }, [searchParams, currentSubcategory, router]);
 
     return (
         <div className="space-y-4">
@@ -37,20 +53,17 @@ export default function CategoryFilter() {
                         >
                             {cat.label}
                         </button>
-                        {/* Show subcategories if parent is selected (simplified for now) */}
+                        {/* Show subcategories if parent is selected */}
                         {currentCategory === cat.label && (
                             <div className="pl-4 space-y-1 border-l-2 border-gray-100 ml-2">
                                 {cat.subcategories.map((sub) => (
                                     <button
                                         key={sub}
-                                        // For now, subcategories are just treated as categories in the DB or we need a subcategory field?
-                                        // The prompt implies subcategories. Let's assume the 'category' field might hold subcategory or we need a separate field.
-                                        // For simplicity, let's assume flat category structure for now or just update the category param.
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handleCategoryChange(sub);
+                                            handleSubcategoryChange(cat.label, sub);
                                         }}
-                                        className={`w-full text-left px-2 py-1 rounded-md text-xs ${currentCategory === sub
+                                        className={`w-full text-left px-2 py-1 rounded-md text-xs ${currentSubcategory === sub
                                             ? 'text-primary font-medium'
                                             : 'text-gray-500 hover:text-gray-900'
                                             }`}

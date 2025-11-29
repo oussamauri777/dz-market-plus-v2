@@ -20,7 +20,7 @@ export async function GET(
         await dbConnect();
 
         const conversation = await Conversation.findById(id)
-            .populate('participants', 'name email')
+            .populate('participants', 'name email image')
             .populate('ad', 'title images price')
             .lean();
 

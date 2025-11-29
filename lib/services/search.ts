@@ -5,6 +5,7 @@ import { PipelineStage } from 'mongoose';
 export interface SearchParams {
     query?: string;
     category?: string;
+    subcategory?: string;
     wilaya?: string;
     commune?: string;
     minPrice?: string;
@@ -23,6 +24,7 @@ export async function searchAds(params: SearchParams) {
     const {
         query,
         category,
+        subcategory,
         wilaya,
         commune,
         minPrice,
@@ -60,6 +62,10 @@ export async function searchAds(params: SearchParams) {
     // 3. Filters
     if (category) {
         pipeline.push({ $match: { category } });
+    }
+
+    if (subcategory) {
+        pipeline.push({ $match: { subcategory } });
     }
 
     if (wilaya) {

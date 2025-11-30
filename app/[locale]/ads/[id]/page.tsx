@@ -6,6 +6,7 @@ import { useRouter, Link } from '@/i18n/routing';
 import { MessageCircle, Phone, MapPin, Calendar, Share2, Heart, ShieldCheck, User, CheckCircle, Tag, AlertCircle, Eye } from 'lucide-react';
 import ReviewSection from '@/components/reviews/ReviewSection';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/common/ImageWithFallback';
 import dynamic from 'next/dynamic';
 import DistanceCalculator from '@/components/DistanceCalculator';
 
@@ -285,7 +286,7 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
                         <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
                             <div className="relative aspect-[4/3] bg-gray-100">
                                 {ad.images[selectedImageIndex] ? (
-                                    <Image
+                                    <ImageWithFallback
                                         src={ad.images[selectedImageIndex]}
                                         alt={ad.title}
                                         fill
@@ -306,7 +307,7 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
                                             className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all ${selectedImageIndex === index ? 'border-primary shadow-md' : 'border-transparent hover:border-gray-200'
                                                 }`}
                                         >
-                                            <Image src={img} alt="" fill className="object-cover" />
+                                            <ImageWithFallback src={img} alt="" fill className="object-cover" />
                                         </button>
                                     ))}
                                 </div>

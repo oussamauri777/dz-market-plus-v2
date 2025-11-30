@@ -1,5 +1,6 @@
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/common/ImageWithFallback';
 import { MapPin, Clock, Eye } from 'lucide-react';
 import FavoriteButton from './FavoriteButton';
 
@@ -34,7 +35,7 @@ export default function AdCard({ ad }: AdCardProps) {
                     {/* Image Container */}
                     <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                         {ad.images[0] ? (
-                            <Image
+                            <ImageWithFallback
                                 src={ad.images[0]}
                                 alt={ad.title}
                                 fill

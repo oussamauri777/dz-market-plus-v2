@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import StarRating from '@/components/common/StarRating';
-import Image from 'next/image';
+import ImageWithFallback from '@/components/common/ImageWithFallback';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Link } from '@/i18n/routing';
@@ -32,6 +32,7 @@ export default function ReviewList({ sellerId, adId }: ReviewListProps) {
             const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
+                console.log('Fetched reviews:', data); // Debug log
                 if (pageNum === 1) {
                     setReviews(data.reviews);
                 } else {
@@ -90,7 +91,7 @@ export default function ReviewList({ sellerId, adId }: ReviewListProps) {
                         <div className="flex items-start gap-4">
                             <Link href={`/user/${review.buyer._id}`} className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 block hover:opacity-80 transition-opacity">
                                 {review.buyer.image ? (
-                                    <Image src={review.buyer.image} alt={review.buyer.name} fill className="object-cover" />
+                                    <ImageWithFallback src={review.buyer.image} alt={review.buyer.name} fill className="object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xl">
                                         {review.buyer.name.charAt(0).toUpperCase()}

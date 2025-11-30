@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import ImageWithFallback from '@/components/common/ImageWithFallback';
 import { MapPin, Calendar, Star, ShieldCheck, Mail, Phone, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -23,7 +23,7 @@ export default function SellerProfileCard({ user, stats }: SellerProfileCardProp
                 <div className="relative -mt-16 mb-6 flex flex-col sm:flex-row items-center sm:items-end gap-6">
                     <div className="relative w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100">
                         {user.image ? (
-                            <Image src={user.image} alt={user.name} fill className="object-cover" />
+                            <ImageWithFallback src={user.image} alt={user.name} fill className="object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
                                 <UserIcon size={48} />

@@ -1,5 +1,6 @@
 import dbConnect from '@/lib/db';
 import Ad from '@/models/Ad';
+import '@/models/User'; // Ensure User model is registered for population
 import { PipelineStage } from 'mongoose';
 import { analyzeQuery, generateEmbedding, cosineSimilarity } from '@/lib/ai';
 

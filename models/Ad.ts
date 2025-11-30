@@ -70,6 +70,14 @@ AdSchema.index({
     wilaya: 'text',
     'location.address': 'text'
 });
+// Vector Search Index (Manual creation required in Atlas)
+AdSchema.index({ embedding: 'vector' }); // Placeholder for documentation
+AdSchema.add({
+    embedding: {
+        type: [Number],
+        select: false, // Don't return by default
+    }
+});
 AdSchema.index({ price: 1 });
 AdSchema.index({ category: 1 });
 AdSchema.index({ subcategory: 1 });

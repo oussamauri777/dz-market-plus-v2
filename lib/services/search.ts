@@ -1,6 +1,7 @@
 import dbConnect from '@/lib/db';
 import Ad from '@/models/Ad';
 import { PipelineStage } from 'mongoose';
+import { analyzeQuery, generateEmbedding, cosineSimilarity } from '@/lib/ai';
 
 export interface SearchParams {
     query?: string;
@@ -18,6 +19,7 @@ export interface SearchParams {
     sort?: string;
     page?: string;
     limit?: string;
+    ai?: string; // New parameter
 }
 
 export async function searchAds(params: SearchParams) {
@@ -36,7 +38,8 @@ export async function searchAds(params: SearchParams) {
         radius,
         sort = 'newest',
         page = '1',
-        limit = '20'
+        limit = '20',
+        ai
     } = params;
 
     const pageNum = parseInt(page);
@@ -45,6 +48,83 @@ export async function searchAds(params: SearchParams) {
 
     await dbConnect();
 
+    // AI SEARCH PATH
+    if (ai === 'true' && query) {
+        try {
+            // 1. Analyze Intent
+            const intent = await analyzeQuery(query);
+
+            // 2. Generate Embedding
+            const searchContext = `${query} ${intent.keywords.join(' ')} ${intent.filters.join(' ')}`;
+            const queryEmbedding = await generateEmbedding(searchContext);
+
+            if (queryEmbedding.length > 0) {
+                // 3. Fetch Candidates (with filters if possible)
+                const filter: any = { status: 'active', embedding: { $exists: true } };
+
+                // Apply basic filters if they exist in the intent or params
+                // Note: We prioritize explicit params over intent for filters like location
+                if (wilaya) filter.wilaya = wilaya;
+                if (commune) filter['location.commune'] = commune;
+                if (minPrice) filter.price = { ...filter.price, $gte: parseInt(minPrice) };
+                if (maxPrice) filter.price = { ...filter.price, $lte: parseInt(maxPrice) };
+
+                // Fetch candidates
+                const candidates = await Ad.find(filter).select('+embedding').lean();
+
+                // 4. Rank
+                const rankedAds = candidates.map((ad: any) => ({
+                    ...ad,
+                    _id: ad._id.toString(),
+                    user: ad.user ? { ...ad.user, _id: ad.user._id?.toString() || ad.user.toString() } : null,
+                    createdAt: ad.createdAt.toISOString(),
+                    score: cosineSimilarity(queryEmbedding, ad.embedding),
+                    embedding: undefined
+                }))
+                    .sort((a, b) => b.score - a.score)
+                    .slice(skip, skip + limitNum); // Manual pagination
+
+                // Fetch user details for the ranked ads (since .lean() might not populate)
+                // Actually, let's just do a second lookup or ensure populate works.
+                // For simplicity/speed, let's assume candidates need population if we want user details.
+                // But Ad.find().populate('user') works.
+
+                // Let's re-fetch the top N IDs with population to be safe and consistent
+                const topIds = rankedAds.map(ad => ad._id);
+                const populatedAds = await Ad.find({ _id: { $in: topIds } })
+                    .populate('user', '-password -email -role')
+                    .lean();
+
+                // Re-order to match ranking
+                const finalAds = topIds.map(id => {
+                    const ad = populatedAds.find(p => p._id.toString() === id);
+                    return {
+                        ...ad,
+                        _id: ad?._id.toString(),
+                        user: { ...ad?.user, _id: ad?.user?._id.toString() },
+                        createdAt: ad?.createdAt.toISOString(),
+                        score: rankedAds.find(r => r._id === id)?.score
+                    };
+                });
+
+                return {
+                    ads: finalAds,
+                    pagination: {
+                        total: candidates.length,
+                        page: pageNum,
+                        limit: limitNum,
+                        pages: Math.ceil(candidates.length / limitNum)
+                    },
+                    intent // Return intent for UI
+                };
+            }
+        } catch (error) {
+            console.error('AI Search failed, falling back to regular search:', error);
+            // Fallback to regular search below
+        }
+    }
+
+    // REGULAR SEARCH PATH (Existing Logic)
     const pipeline: PipelineStage[] = [];
 
     // 1. Text Search (Must be first)

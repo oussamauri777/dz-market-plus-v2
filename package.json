@@ -18,6 +18,7 @@
     "embla-carousel-react": "^8.6.0",
     "emoji-picker-react": "^4.15.1",
     "framer-motion": "^12.23.24",
+    "groq-sdk": "^0.37.0",
     "leaflet": "^1.9.4",
     "leaflet-defaulticon-compatibility": "^0.1.2",
     "lucide-react": "^0.554.0",
@@ -33,7 +34,9 @@
     "react-leaflet": "^5.0.0",
     "resend": "^6.5.2",
     "tailwind-merge": "^3.4.0",
-    "twilio": "^5.10.6"
+    "twilio": "^5.10.6",
+    "use-debounce": "^10.0.6",
+    "voyageai": "^0.0.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

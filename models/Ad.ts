@@ -71,7 +71,7 @@ AdSchema.index({
     'location.address': 'text'
 });
 // Vector Search Index (Manual creation required in Atlas)
-AdSchema.index({ embedding: 'vector' }); // Placeholder for documentation
+// AdSchema.index({ embedding: 'vector' }); // Create manually in MongoDB Atlas UI
 AdSchema.add({
     embedding: {
         type: [Number],

@@ -13,6 +13,15 @@ export async function POST(req: Request) {
 
         await dbConnect();
 
+        // Check for API Keys
+        if (!process.env.GROQ_API_KEY || !process.env.VOYAGE_API_KEY) {
+            console.error('[AI_SEARCH_API] Missing API Keys:', {
+                GROQ_API_KEY: !!process.env.GROQ_API_KEY,
+                VOYAGE_API_KEY: !!process.env.VOYAGE_API_KEY
+            });
+            return NextResponse.json({ error: 'Server configuration error: Missing AI API Keys' }, { status: 500 });
+        }
+
         // 1. Analyze Query Intent (Groq + Llama 3.1)
         const intent = await analyzeQuery(query);
         console.log('Search Intent:', intent);

@@ -96,8 +96,8 @@ export async function GET() {
                 // Growth metrics
                 newUsersThisMonth,
                 newAdsThisMonth,
-                usersGrowthPercent: parseFloat(usersGrowthPercent),
-                adsGrowthPercent: parseFloat(adsGrowthPercent),
+                usersGrowthPercent: typeof usersGrowthPercent === 'string' ? parseFloat(usersGrowthPercent) : usersGrowthPercent,
+                adsGrowthPercent: typeof adsGrowthPercent === 'string' ? parseFloat(adsGrowthPercent) : adsGrowthPercent,
                 activeUsers,
             }
         });

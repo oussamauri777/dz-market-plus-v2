@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import AdminSidebar from '@/components/admin/Sidebar';
 
-function AdminLayoutContent({ children }: { children: React.NodeNode }) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { data: session, status } = useSession();
 

@@ -26,6 +26,7 @@ interface Ad {
     condition: string;
     status: string;
     views: number; // Add views
+    favoritesCount?: number; // Add favoritesCount
     user: {
         _id: string;
         name: string;
@@ -180,6 +181,37 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
         }
     };
 
+    const handleShare = async () => {
+        const shareUrl = window.location.href;
+        const shareData = {
+            title: ad?.title || 'Annonce',
+            text: `Découvrez cette annonce: ${ad?.title}`,
+            url: shareUrl,
+        };
+
+        try {
+            // Try using Web Share API if available (mobile devices)
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback: copy to clipboard
+                await navigator.clipboard.writeText(shareUrl);
+                alert('Lien copié dans le presse-papiers!');
+            }
+        } catch (error) {
+            // If share was cancelled or failed, try clipboard as fallback
+            if (error instanceof Error && error.name !== 'AbortError') {
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    alert('Lien copié dans le presse-papiers!');
+                } catch (clipboardError) {
+                    console.error('Failed to copy:', clipboardError);
+                    alert('Impossible de partager le lien');
+                }
+            }
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -255,11 +287,18 @@ export default function AdDetailsPage({ params }: { params: Promise<{ id: string
                                 </button>
                             </>
                         )}
-                        <button className="p-2 text-gray-400 hover:text-primary hover:bg-white rounded-full transition-all">
+                        <button
+                            onClick={handleShare}
+                            className="p-2 text-gray-400 hover:text-primary hover:bg-white rounded-full transition-all"
+                            title="Partager"
+                        >
                             <Share2 className="w-5 h-5" />
                         </button>
-                        <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-white rounded-full transition-all">
+                        <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-white rounded-full transition-all flex items-center gap-1">
                             <Heart className="w-5 h-5" />
+                            {ad.favoritesCount !== undefined && ad.favoritesCount > 0 && (
+                                <span className="text-sm font-medium">{ad.favoritesCount}</span>
+                            )}
                         </button>
                     </div>
                 </div>

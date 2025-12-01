@@ -181,24 +181,43 @@ export async function searchAds(params: SearchParams) {
         pipeline.push({
             $addFields: {
                 distance: {
-                    $function: {
-                        body: function (lat1: number, lon1: number, lat2: number, lon2: number) {
-                            if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-                            const R = 6371e3;
-                            const φ1 = lat1 * Math.PI / 180;
-                            const φ2 = lat2 * Math.PI / 180;
-                            const Δφ = (lat2 - lat1) * Math.PI / 180;
-                            const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-                            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                                Math.cos(φ1) * Math.cos(φ2) *
-                                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-                            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-                            return R * c;
+                    $let: {
+                        vars: {
+                            dLat: { $degreesToRadians: { $subtract: [latitude, "$location.latitude"] } },
+                            dLon: { $degreesToRadians: { $subtract: [longitude, "$location.longitude"] } },
+                            lat1: { $degreesToRadians: "$location.latitude" },
+                            lat2: { $degreesToRadians: latitude }
                         },
-                        args: ["$location.latitude", "$location.longitude", latitude, longitude],
-                        lang: "js"
+                        in: {
+                            $let: {
+                                vars: {
+                                    a: {
+                                        $add: [
+                                            { $pow: [{ $sin: { $divide: ["$$dLat", 2] } }, 2] },
+                                            {
+                                                $multiply: [
+                                                    { $cos: "$$lat1" },
+                                                    { $cos: "$$lat2" },
+                                                    { $pow: [{ $sin: { $divide: ["$$dLon", 2] } }, 2] }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                in: {
+                                    $multiply: [
+                                        6371000,
+                                        2,
+                                        {
+                                            $atan2: [
+                                                { $sqrt: "$$a" },
+                                                { $sqrt: { $subtract: [1, "$$a"] } }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }

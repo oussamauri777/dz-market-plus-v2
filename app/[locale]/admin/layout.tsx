@@ -1,12 +1,12 @@
 'use client';
 
-import { SessionProvider } from 'next-auth/react';
+
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import AdminSidebar from '@/components/admin/Sidebar';
 
-function AdminLayoutContent({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { data: session, status } = useSession();
 
@@ -42,15 +42,5 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 {children}
             </main>
         </div>
-    );
-}
-
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <SessionProvider>
-            <AdminLayoutContent>
-                {children}
-            </AdminLayoutContent>
-        </SessionProvider>
     );
 }

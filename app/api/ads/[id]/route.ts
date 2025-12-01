@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Ad from '@/models/Ad';
+import User from '@/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -19,6 +20,8 @@ export async function GET(
             return new NextResponse('Ad not found', { status: 404 });
         }
 
+        const favoritesCount = await User.countDocuments({ favorites: id });
+
         return NextResponse.json({
             ...ad,
             _id: ad._id.toString(),
@@ -27,6 +30,7 @@ export async function GET(
                 _id: (ad.user as any)._id.toString(),
             },
             createdAt: ad.createdAt.toISOString(),
+            favoritesCount,
         });
     } catch (error) {
         console.error('[AD_GET]', error);

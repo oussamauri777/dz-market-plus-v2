@@ -6,12 +6,14 @@ import { useSession, signOut } from 'next-auth/react';
 import { MessageCircle, Plus, User, LogOut, Menu, X, Bell, Heart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import LanguageSwitcher from './LanguageSwitcher';
+import { useFavorites } from '@/hooks/useFavorites';
 
 export default function Navbar() {
     const t = useTranslations('Navigation');
     const { data: session } = useSession();
     console.log('[Navbar Debug] User:', session?.user, 'Role:', session?.user?.role);
     const [unreadCount, setUnreadCount] = useState(0);
+    const { favorites } = useFavorites();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
@@ -42,6 +44,8 @@ export default function Navbar() {
             console.error('Failed to fetch unread count:', error);
         }
     };
+
+    const favoritesCount = favorites.length;
 
     return (
         <nav
@@ -78,10 +82,15 @@ export default function Navbar() {
                         </Link>
                         <Link
                             href="/favorites"
-                            className="text-gray-600 hover:text-primary font-medium transition-colors text-sm flex items-center gap-1.5 hover:bg-gray-50 px-3 py-2 rounded-full"
+                            className="text-gray-600 hover:text-primary font-medium transition-colors text-sm flex items-center gap-1.5 hover:bg-gray-50 px-3 py-2 rounded-full relative group"
                         >
                             <Heart className="h-4 w-4" />
                             Favoris
+                            {favoritesCount > 0 && (
+                                <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-sm animate-pulse">
+                                    {favoritesCount > 9 ? '9+' : favoritesCount}
+                                </span>
+                            )}
                         </Link>
                         {session && (
                             <Link

@@ -23,7 +23,7 @@
     "leaflet-defaulticon-compatibility": "^0.1.2",
     "lucide-react": "^0.554.0",
     "mongoose": "^9.0.0",
-    "next": "16.0.3",
+    "next": "16.0.10",
     "next-auth": "^4.24.13",
     "next-cloudinary": "^6.17.5",
     "next-intl": "^4.5.5",

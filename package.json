@@ -16,6 +16,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "embla-carousel-react": "^8.6.0",
+    "jsonwebtoken": "^9.0.2",
     "emoji-picker-react": "^4.15.1",
     "framer-motion": "^12.23.24",
     "groq-sdk": "^0.37.0",

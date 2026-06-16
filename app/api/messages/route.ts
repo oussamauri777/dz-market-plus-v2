@@ -4,14 +4,18 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import Message from '@/models/Message';
 import Conversation from '@/models/Conversation';
+import Ad from '@/models/Ad';
+import Notification from '@/models/Notification';
 import { pusherServer } from '@/lib/pusher';
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 // GET - Fetch messages for a conversation
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session?.user?.id) {
+        if (!userId) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
@@ -31,7 +35,7 @@ export async function GET(req: Request) {
         }
 
         const isParticipant = conversation.participants.some(
-            (p: any) => p.toString() === session.user.id
+            (p: any) => p.toString() === userId
         );
 
         if (!isParticipant) {
@@ -67,8 +71,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session?.user?.id) {
+        if (!userId) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
@@ -87,7 +92,7 @@ export async function POST(req: Request) {
         }
 
         const isParticipant = conversation.participants.some(
-            (p: any) => p.toString() === session.user.id
+            (p: any) => p.toString() === userId
         );
 
         if (!isParticipant) {
@@ -97,7 +102,7 @@ export async function POST(req: Request) {
         // Create message
         const message = await Message.create({
             conversation: conversationId,
-            sender: session.user.id,
+            sender: userId,
             content: content || (type === 'image' ? 'Sent an image' : type === 'audio' ? 'Sent a voice message' : 'Sent a file'),
             type: type || 'text',
             fileUrl,
@@ -113,9 +118,43 @@ export async function POST(req: Request) {
         // Populate sender info
         await message.populate('sender', 'name');
 
+        // Create notification for recipient
+        const recipientId = conversation.participants.find(
+            (p: any) => p.toString() !== userId
+        );
+        if (recipientId) {
+            const senderName = (message.sender as any)?.name || 'Someone';
+            const adDoc = await Ad.findById(conversation.ad).select('title').lean();
+            await Notification.create({
+                user: recipientId,
+                type: 'new_message',
+                title: senderName,
+                body: content
+                    ? content.substring(0, 120)
+                    : type === 'image' ? '📷 Image'
+                    : type === 'audio' ? '🎤 Voice Message'
+                    : '📎 File',
+                data: {
+                    conversationId: conversationId,
+                    senderId: userId,
+                    adTitle: (adDoc as any)?.title || '',
+                },
+            });
+        }
 
-
-        // Trigger Pusher event
+        // Trigger Pusher event to conversation and recipient channels
+        if (recipientId) {
+            await pusherServer.trigger(`private-user-${recipientId}`, 'receive_message', {
+                ...message.toObject(),
+                _id: message._id.toString(),
+                conversation: message.conversation.toString(),
+                sender: {
+                    ...(message.sender as any).toObject(),
+                    _id: (message.sender as any)._id.toString(),
+                },
+                createdAt: message.createdAt.toISOString(),
+            }).catch(() => {});
+        }
         await pusherServer.trigger(`private-${conversationId}`, 'receive_message', {
             ...message.toObject(),
             _id: message._id.toString(),
@@ -147,8 +186,9 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session?.user?.id) {
+        if (!userId) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
@@ -167,7 +207,7 @@ export async function DELETE(req: Request) {
             return new NextResponse('Message not found', { status: 404 });
         }
 
-        if (message.sender.toString() !== session.user.id) {
+        if (message.sender.toString() !== userId) {
             return new NextResponse('Forbidden - You can only delete your own messages', { status: 403 });
         }
 

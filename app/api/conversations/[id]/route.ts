@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import Conversation from '@/models/Conversation';
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 export async function GET(
     req: Request,
@@ -10,8 +11,9 @@ export async function GET(
 ) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session?.user?.id) {
+        if (!userId) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
@@ -30,7 +32,7 @@ export async function GET(
 
         // Check if user is participant
         const isParticipant = (conversation.participants as any[]).some(
-            (p: any) => p._id.toString() === session.user.id
+            (p: any) => p._id.toString() === userId
         );
 
         if (!isParticipant) {

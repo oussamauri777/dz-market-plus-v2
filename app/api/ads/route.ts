@@ -4,12 +4,14 @@ import Ad from "@/models/Ad";
 import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getUserIdFromRequest } from "@/lib/mobile-auth";
 
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        let userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session) {
+        if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
@@ -27,8 +29,8 @@ export async function POST(req: Request) {
         await dbConnect();
 
         // Rate limiting
-        const user = await User.findById(session.user.id);
-        if (user.lastPostDate) {
+        const user = await User.findById(userId);
+        if (user && user.lastPostDate) {
             const lastPost = new Date(user.lastPostDate).getTime();
             const now = Date.now();
             const cooldown = 2 * 60 * 1000; // 2 minutes
@@ -48,11 +50,13 @@ export async function POST(req: Request) {
             images,
             location,
             condition,
-            user: session.user.id,
+            user: userId,
         });
 
         // Update user's last post date
-        await User.findByIdAndUpdate(session.user.id, { lastPostDate: new Date() });
+        if (user) {
+            await User.findByIdAndUpdate(userId, { lastPostDate: new Date() });
+        }
 
         return NextResponse.json(ad);
     } catch (error) {

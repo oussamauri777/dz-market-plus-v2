@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getUserIdFromRequest } from '@/lib/mobile-auth';
 import dbConnect from '@/lib/db';
-import User from '@/models/User';
+import Notification from '@/models/Notification';
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 export async function GET(req: Request) {
     try {
@@ -16,12 +16,11 @@ export async function GET(req: Request) {
 
         await dbConnect();
 
-        const user = await User.findById(userId).select('favorites');
-        const count = user?.favorites?.length || 0;
+        const count = await Notification.countDocuments({ user: userId, read: false });
 
         return NextResponse.json({ count });
     } catch (error) {
-        console.error('[FAVORITES_COUNT_GET]', error);
-        return NextResponse.json({ count: 0 }, { status: 500 });
+        console.error('[NOTIFICATIONS_UNREAD_COUNT]', error);
+        return NextResponse.json({ count: 0 });
     }
 }

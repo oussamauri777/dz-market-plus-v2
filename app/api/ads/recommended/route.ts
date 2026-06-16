@@ -4,16 +4,18 @@ import Ad from '@/models/Ad';
 import User from '@/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
         await dbConnect();
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
         let filter: any = { status: 'active' };
 
-        if (session?.user?.id) {
-            const user = await User.findById(session.user.id);
+        if (userId) {
+            const user = await User.findById(userId);
             if (user && user.viewedCategories && user.viewedCategories.length > 0) {
                 // Recommend ads from categories the user has viewed
                 // Take the last 3 viewed categories

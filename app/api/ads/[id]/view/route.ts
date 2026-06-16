@@ -4,6 +4,7 @@ import Ad from '@/models/Ad';
 import User from '@/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 export async function POST(
     req: Request,
@@ -13,6 +14,7 @@ export async function POST(
         const { id } = await params;
         await dbConnect();
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
         // Increment view count
         const ad = await Ad.findByIdAndUpdate(
@@ -26,8 +28,8 @@ export async function POST(
         }
 
         // Update user history if logged in
-        if (session?.user?.id) {
-            await User.findByIdAndUpdate(session.user.id, {
+        if (userId) {
+            await User.findByIdAndUpdate(userId, {
                 $addToSet: {
                     viewedCategories: ad.category,
                     recentlyViewedAds: id

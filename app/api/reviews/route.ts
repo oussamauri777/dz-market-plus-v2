@@ -5,12 +5,14 @@ import User from "@/models/User";
 import Ad from "@/models/Ad";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session) {
+        if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -28,7 +30,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Invalid User ID or Ad ID" }, { status: 400 });
         }
 
-        if (session.user.id === targetUserId) {
+        if (userId === targetUserId) {
             return NextResponse.json({ error: "Cannot review yourself" }, { status: 400 });
         }
 
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
 
         // Check if review already exists
         const existingReview = await Review.findOne({
-            buyer: session.user.id,
+            buyer: userId,
             ad: adId
         });
 
@@ -47,7 +49,7 @@ export async function POST(req: Request) {
         const review = await Review.create({
             rating,
             comment,
-            buyer: session.user.id,
+            buyer: userId,
             seller: targetUserId,
             ad: adId,
         });

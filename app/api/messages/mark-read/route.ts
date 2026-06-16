@@ -5,12 +5,14 @@ import dbConnect from '@/lib/db';
 import Message from '@/models/Message';
 import Conversation from '@/models/Conversation';
 import { pusherServer } from '@/lib/pusher';
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 export async function PATCH(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session?.user?.id) {
+        if (!userId) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
@@ -29,7 +31,7 @@ export async function PATCH(req: Request) {
         }
 
         const isParticipant = conversation.participants.some(
-            (p: any) => p.toString() === session.user.id
+            (p: any) => p.toString() === userId
         );
 
         if (!isParticipant) {
@@ -40,7 +42,7 @@ export async function PATCH(req: Request) {
         const result = await Message.updateMany(
             {
                 conversation: conversationId,
-                sender: { $ne: session.user.id },
+                sender: { $ne: userId },
                 read: false,
             },
             { $set: { read: true } }
@@ -49,7 +51,7 @@ export async function PATCH(req: Request) {
         // Get the IDs of messages that were just marked as read
         const readMessages = await Message.find({
             conversation: conversationId,
-            sender: { $ne: session.user.id },
+            sender: { $ne: userId },
             read: true,
         }).select('_id');
 

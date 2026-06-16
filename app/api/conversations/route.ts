@@ -5,20 +5,22 @@ import dbConnect from '@/lib/db';
 import Conversation from '@/models/Conversation';
 import Message from '@/models/Message';
 import Ad from '@/models/Ad';
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 // GET - List user's conversations
-export async function GET() {
+export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        let userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session?.user?.id) {
+        if (!userId) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
         await dbConnect();
 
         const conversations = await Conversation.find({
-            participants: session.user.id,
+            participants: userId,
         })
             .populate('participants', 'name email image')
             .populate('ad', 'title images')
@@ -31,7 +33,7 @@ export async function GET() {
                 // Count unread messages for this user in this conversation
                 const unreadCount = await Message.countDocuments({
                     conversation: conv._id,
-                    sender: { $ne: session.user.id },
+                    sender: { $ne: userId },
                     read: false,
                 });
 
@@ -62,8 +64,9 @@ export async function GET() {
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session?.user?.id) {
+        if (!userId) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
@@ -83,7 +86,7 @@ export async function POST(req: Request) {
 
         // Check if conversation already exists
         const existingConversation = await Conversation.findOne({
-            participants: { $all: [session.user.id, sellerId] },
+            participants: { $all: [userId, sellerId] },
             ad: adId,
         });
 
@@ -96,7 +99,7 @@ export async function POST(req: Request) {
 
         // Create new conversation
         const conversation = await Conversation.create({
-            participants: [session.user.id, sellerId],
+            participants: [userId, sellerId],
             ad: adId,
         });
 

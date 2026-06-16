@@ -4,12 +4,14 @@ import User from "@/models/User";
 import Ad from "@/models/Ad";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session) {
+        if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
 
         await dbConnect();
 
-        const user = await User.findById(session.user.id);
+        const user = await User.findById(userId);
 
         if (!user) {
             return new NextResponse("User not found", { status: 404 });
@@ -47,14 +49,15 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session) {
+        if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
         await dbConnect();
 
-        const user = await User.findById(session.user.id).populate({
+        const user = await User.findById(userId).populate({
             path: 'favorites',
             model: Ad,
             populate: {

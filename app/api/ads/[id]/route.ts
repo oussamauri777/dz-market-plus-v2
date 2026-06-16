@@ -4,6 +4,7 @@ import Ad from '@/models/Ad';
 import User from '@/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 export async function GET(
     req: Request,
@@ -44,8 +45,9 @@ export async function PATCH(
 ) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session || !session.user) {
+        if (!userId) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
         }
 
@@ -67,7 +69,7 @@ export async function PATCH(
         }
 
         // Check if user owns this ad
-        if (ad.user.toString() !== session.user.id) {
+        if (ad.user.toString() !== userId) {
             return NextResponse.json({ error: 'Vous ne pouvez modifier que vos propres annonces' }, { status: 403 });
         }
 
@@ -91,8 +93,9 @@ export async function DELETE(
 ) {
     try {
         const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
 
-        if (!session || !session.user) {
+        if (!userId) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
         }
 
@@ -108,7 +111,7 @@ export async function DELETE(
         }
 
         // Check if user owns this ad
-        if (ad.user.toString() !== session.user.id) {
+        if (ad.user.toString() !== userId) {
             return NextResponse.json({ error: 'Vous ne pouvez supprimer que vos propres annonces' }, { status: 403 });
         }
 

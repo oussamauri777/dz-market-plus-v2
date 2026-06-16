@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import Pusher from 'pusher';
+import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 const pusher = new Pusher({
     appId: process.env.PUSHER_APP_ID!,
@@ -14,9 +15,24 @@ const pusher = new Pusher({
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
+        let userId = session?.user?.id || getUserIdFromRequest(req);
+        let userName = session?.user?.name || 'Mobile User';
+        let userEmail = session?.user?.email || '';
+        let userImage = session?.user?.image || '';
 
-        if (!session?.user?.id) {
+        if (!userId) {
             return new NextResponse('Unauthorized', { status: 401 });
+        }
+
+        // Fetch user data for presence channels if not from web session
+        if (!session?.user) {
+            const User = require('@/models/User').default || require('@/models/User');
+            const user = await User.findById(userId).lean();
+            if (user) {
+                userName = user.name;
+                userEmail = user.email;
+                userImage = user.image;
+            }
         }
 
         const body = await req.text();
@@ -31,11 +47,11 @@ export async function POST(req: Request) {
         // Determine channel type and authorize
         if (channelName.startsWith('presence-')) {
             const presenceData = {
-                user_id: session.user.id,
+                user_id: userId,
                 user_info: {
-                    name: session.user.name,
-                    email: session.user.email,
-                    image: session.user.image,
+                    name: userName,
+                    email: userEmail,
+                    image: userImage,
                 },
             };
             const authResponse = pusher.authorizeChannel(socketId, channelName, presenceData);

@@ -1,4 +1,5 @@
 import dbConnect from "./db";
+import mongoose from "mongoose";
 
 interface RateLimitRecord {
     _id?: string;
@@ -10,7 +11,6 @@ interface RateLimitRecord {
 // Simple in-memory collection helper since we're using native MongoDB driver
 async function getRateLimitCollection() {
     await dbConnect();
-    const mongoose = await import('mongoose');
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database connection not established");
     return db.collection('ratelimits');

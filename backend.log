@@ -1,0 +1,26 @@
+
+> dz-market-plus@0.1.0 dev
+> next dev
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Local:         http://localhost:3000
+   - Network:       http://192.168.100.44:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+ ✓ Ready in 5.3s
+ GET /api/ads?limit=20&page=2 200 in 4.6s (compile: 2.7s, render: 1860ms)
+ POST /api/favorites 401 in 737ms (compile: 700ms, render: 38ms)
+ POST /api/favorites 401 in 38ms (compile: 6ms, render: 32ms)
+ GET /api/ads?limit=20&page=3 200 in 249ms (compile: 6ms, render: 243ms)
+ GET /api/ads?limit=20&page=4 200 in 258ms (compile: 8ms, render: 250ms)
+ GET /api/ads?limit=20&page=5 200 in 236ms (compile: 7ms, render: 229ms)
+ GET /api/ads?limit=20&page=6 200 in 185ms (compile: 4ms, render: 180ms)
+ GET /api/ads/69320ef5b0ab111f0aae57ad 200 in 3.1s (compile: 2.7s, render: 393ms)
+ GET /api/reviews?sellerId=6924744ca5f26e726e1e73b5 200 in 1151ms (compile: 570ms, render: 581ms)
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[?25h
+
+C:\MyFlutterProjects\DzMarket+>

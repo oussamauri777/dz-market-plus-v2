@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The google_sign_in plugin requires the server_client_id (Web OAuth 2.0 Client ID)
+      to be declared here so the Android SDK can request an ID token.
+      This MUST match GOOGLE_CLIENT_ID in your Next.js .env.local
+    -->
+    <string name="server_client_id">850639876917-c8rn55bl528mi4aa5puv5flo9hn1ldck.apps.googleusercontent.com</string>
+</resources>

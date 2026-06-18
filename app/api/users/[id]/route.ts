@@ -12,7 +12,7 @@ export async function GET(
         await dbConnect();
 
         const { id } = await params;
-        const user = await User.findById(id).select('name email image bio wilaya badges createdAt');
+        const user = await User.findById(id).select('name email image bio wilaya phone badges createdAt');
 
         if (!user) {
             return new NextResponse("User not found", { status: 404 });

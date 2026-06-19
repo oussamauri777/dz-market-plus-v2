@@ -248,7 +248,7 @@ class ApiService {
   static Future<void> sendVerificationCode(String email) async {
     try {
       final response = await http.post(
-        Uri.parse('${AppConfig.baseUrl}/auth/send-code'),
+        Uri.parse('${AppConfig.baseUrl}/auth/email/send'),
         headers: await _jsonHeaders(),
         body: json.encode({'email': email}),
       );
@@ -264,7 +264,7 @@ class ApiService {
   static Future<Map<String, dynamic>> verifyCode(String email, String code) async {
     try {
       final response = await http.post(
-        Uri.parse('${AppConfig.baseUrl}/auth/verify-code'),
+        Uri.parse('${AppConfig.baseUrl}/auth/email/verify'),
         headers: await _jsonHeaders(),
         body: json.encode({'email': email, 'code': code}),
       );
@@ -525,6 +525,136 @@ class ApiService {
       commune: json['location'] is Map ? json['location']['commune'] : null,
       embedding: json['embedding'] != null ? List<double>.from(json['embedding']) : null,
     );
+  }
+
+  // ─────────────── Admin ───────────────
+
+  static Future<Map<String, dynamic>> getAdminOverview() async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/admin/analytics/overview'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception('Failed to load admin overview');
+  }
+
+  static Future<Map<String, dynamic>> getAdminCharts({int days = 30}) async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/admin/analytics/charts?days=$days'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception('Failed to load admin charts');
+  }
+
+  static Future<Map<String, dynamic>> getAdminUsers({int page = 1, String search = ''}) async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/admin/users?page=$page&search=$search'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception('Failed to load admin users');
+  }
+
+  static Future<void> updateUserRole(String userId, String role) async {
+    final headers = await _authHeaders();
+    final response = await http.patch(
+      Uri.parse('${AppConfig.baseUrl}/admin/users/$userId'),
+      headers: headers,
+      body: json.encode({'role': role}),
+    );
+    if (response.statusCode != 200) throw Exception('Failed to update user');
+  }
+
+  static Future<void> deleteUser(String userId) async {
+    final headers = await _authHeaders();
+    final response = await http.delete(
+      Uri.parse('${AppConfig.baseUrl}/admin/users/$userId'),
+      headers: headers,
+    );
+    if (response.statusCode != 200) throw Exception('Failed to delete user');
+  }
+
+  static Future<Map<String, dynamic>> getAdminAds({int page = 1, String search = '', String status = ''}) async {
+    final headers = await _authHeaders();
+    final params = 'page=$page${search.isNotEmpty ? '&search=$search' : ''}${status.isNotEmpty ? '&status=$status' : ''}';
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/admin/ads?$params'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception('Failed to load admin ads');
+  }
+
+  static Future<void> updateAdStatus(String adId, String status) async {
+    final headers = await _authHeaders();
+    final response = await http.patch(
+      Uri.parse('${AppConfig.baseUrl}/admin/ads/$adId'),
+      headers: headers,
+      body: json.encode({'status': status}),
+    );
+    if (response.statusCode != 200) throw Exception('Failed to update ad');
+  }
+
+  static Future<void> deleteAd(String adId) async {
+    final headers = await _authHeaders();
+    final response = await http.delete(
+      Uri.parse('${AppConfig.baseUrl}/admin/ads/$adId'),
+      headers: headers,
+    );
+    if (response.statusCode != 200) throw Exception('Failed to delete ad');
+  }
+
+  static Future<Map<String, dynamic>> getAdminReports({String status = ''}) async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/admin/reports${status.isNotEmpty ? '?status=$status' : ''}'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception('Failed to load admin reports');
+  }
+
+  static Future<void> updateReportStatus(String reportId, String status) async {
+    final headers = await _authHeaders();
+    final response = await http.patch(
+      Uri.parse('${AppConfig.baseUrl}/admin/reports?id=$reportId'),
+      headers: headers,
+      body: json.encode({'status': status}),
+    );
+    if (response.statusCode != 200) throw Exception('Failed to update report');
+  }
+
+  static Future<Map<String, dynamic>> getAdminReviews({int page = 1, int limit = 10}) async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/admin/reviews?page=$page&limit=$limit'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception('Failed to load admin reviews');
+  }
+
+  static Future<void> deleteAdminReview(String reviewId) async {
+    final headers = await _authHeaders();
+    final response = await http.delete(
+      Uri.parse('${AppConfig.baseUrl}/admin/reviews?id=$reviewId'),
+      headers: headers,
+    );
+    if (response.statusCode != 200) throw Exception('Failed to delete review');
+  }
+
+  static Future<Map<String, dynamic>> getAdminMessages({int page = 1, int limit = 10}) async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/admin/messages?page=$page&limit=$limit'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception('Failed to load admin messages');
   }
 
   // ─────────────── Notification Preferences ───────────────

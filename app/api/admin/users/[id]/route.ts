@@ -9,7 +9,7 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireAdmin();
+        await requireAdmin(req);
         await dbConnect();
 
         const { id } = await params;
@@ -36,7 +36,7 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireAdmin();
+        await requireAdmin(req);
         await dbConnect();
 
         const { id } = await params;

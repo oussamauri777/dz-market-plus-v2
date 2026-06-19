@@ -8,7 +8,7 @@ import Review from '@/models/Review';
 
 export async function GET(req: Request) {
     try {
-        await requireAdmin();
+        await requireAdmin(req);
         await dbConnect();
 
         const { searchParams } = new URL(req.url);
@@ -70,7 +70,7 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
     try {
-        await requireAdmin();
+        await requireAdmin(req);
         await dbConnect();
 
         const { searchParams } = new URL(req.url);

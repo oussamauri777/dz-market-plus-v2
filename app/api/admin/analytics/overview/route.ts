@@ -6,9 +6,9 @@ import Ad from '@/models/Ad';
 import Review from '@/models/Review';
 import Conversation from '@/models/Conversation';
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
-        await requireAdmin();
+        await requireAdmin(req);
         await dbConnect();
 
         // Basic counts

@@ -4,9 +4,9 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import Ad from '@/models/Ad';
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
-        await requireAdmin();
+        await requireAdmin(req);
         await dbConnect();
 
         // Get statistics

@@ -20,6 +20,7 @@ import '../../features/profile/about_screen.dart';
 import '../../features/messages/messages_screen.dart';
 import '../../features/favorites/favorites_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/admin/admin_screen.dart';
 import '../../shared/widgets/main_scaffold.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -183,6 +184,12 @@ final GoRouter appRouter = GoRouter(
       path: '/about',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AboutScreen(),
+    ),
+    // Admin (no shell)
+    GoRoute(
+      path: '/admin',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AdminScreen(),
     ),
   ],
 );

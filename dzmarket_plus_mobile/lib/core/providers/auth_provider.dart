@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,12 +21,13 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isEmailVerified => _currentUser?.badges.emailVerified ?? false;
   bool get isSeller => _currentUser?.role == 'seller';
+  bool get isAdmin => _currentUser?.role == 'admin';
   GoogleSignIn get googleSignIn => _googleSignIn;
 
   AuthProvider() {
     _googleSignIn = GoogleSignIn(
-      clientId: kIsWeb ? AppConfig.googleClientId : null,
-      serverClientId: kIsWeb ? null : AppConfig.googleClientId,
+      clientId: AppConfig.googleClientId,
+      serverClientId: AppConfig.googleClientId,
       scopes: ['email', 'profile'],
     );
     _loadSession();

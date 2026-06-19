@@ -5,7 +5,7 @@ import User from '@/models/User';
 
 export async function GET(req: Request) {
     try {
-        await requireAdmin();
+        await requireAdmin(req);
         await dbConnect();
 
         const { searchParams } = new URL(req.url);

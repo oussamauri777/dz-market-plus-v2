@@ -339,6 +339,12 @@ class _ProfileScreenState extends State<ProfileScreen>
         _SettingsItem(Icons.help_outline_rounded, context.l10n.t('Profile.help'), () => context.push('/help-support')),
         _SettingsItem(Icons.info_outline_rounded, context.l10n.t('Profile.about'), () => context.push('/about')),
       ]),
+      if (user.role == 'admin') ...[
+        const SizedBox(height: 16),
+        _SettingsSection('Administration', [
+          _SettingsItem(Icons.admin_panel_settings_rounded, 'Panneau d\'administration', () => context.push('/admin')),
+        ]),
+      ],
       const SizedBox(height: 24),
       AppButton(
         label: context.l10n.t('Navigation.logout'),

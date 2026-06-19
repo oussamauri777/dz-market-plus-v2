@@ -21,10 +21,8 @@ export async function sendPushToUser(userId: string, payload: FcmPayload) {
 
         if (tokens.length === 0) return;
 
-        // Determine notification type from payload data
         const type = payload.data?.type || 'system';
 
-        // Check user preferences
         if (type === 'new_message' && prefs.pushMessages === false) return;
         if ((type === 'ad_update' || type === 'ad_approved' || type === 'ad_sold') && prefs.pushAds === false) return;
 
@@ -54,12 +52,13 @@ export async function sendPushToUser(userId: string, payload: FcmPayload) {
 
         const response = await messaging.sendEachForMulticast(message);
 
-        // Clean up invalid tokens
         if (response.failureCount > 0) {
             const invalidTokens: string[] = [];
             response.responses.forEach((resp, idx) => {
-                if (!resp.success && resp.error?.code === 'messaging/invalid-registration-token' ||
-                    resp.error?.code === 'messaging/registration-token-not-registered') {
+                if (!resp.success && (
+                    resp.error?.code === 'messaging/invalid-registration-token' ||
+                    resp.error?.code === 'messaging/registration-token-not-registered')
+                ) {
                     invalidTokens.push(tokens[idx]);
                 }
             });

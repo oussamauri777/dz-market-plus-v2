@@ -552,10 +552,11 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> with SingleTi
             ),
             const SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(context.l10n.t('Profile.buyerComments'),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                Expanded(
+                  child: Text(context.l10n.t('Profile.buyerComments'),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                ),
                 TextButton.icon(
                   onPressed: () => _showAddReviewSheet(sellerName, sellerAds),
                   icon: const Icon(Icons.rate_review_outlined, size: 18),
@@ -634,9 +635,9 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate(this._tabBar);
 
   @override
-  double get minExtent => _tabBar.preferredSize.height;
+  double get minExtent => _tabBar.preferredSize.height + 1;
   @override
-  double get maxExtent => _tabBar.preferredSize.height;
+  double get maxExtent => _tabBar.preferredSize.height + 1;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {

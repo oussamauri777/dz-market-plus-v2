@@ -105,6 +105,7 @@
     "chooseCategoryFirst": "اختر تصنيفاً أولاً",
     "wilaya": "الولاية",
     "commune": "البلدية",
+    "selectCommune": "اختر بلدية",
     "communeHint": "مثال: حيدرة، سيدي امحمد",
     "condition": "الحالة",
     "price": "السعر (د.ج)",
@@ -121,6 +122,7 @@
     "details": "التفاصيل",
     "seller": "البائع",
     "reviews": "التقييمات",
+    "writeReview": "كتابة تقييم",
     "safetyTips": "نصائح السلامة",
     "safetyTipsText": "فضل اللقاءات الشخصية وتفقد السلعة قبل الدفع.",
     "call": "اتصال",
@@ -160,6 +162,7 @@
     "changePassword": "تغيير كلمة المرور",
     "phone": "رقم الهاتف",
     "notifications": "الإشعارات",
+    "darkMode": "الوضع المظلم",
     "language": "اللغة",
     "help": "المساعدة والدعم",
     "about": "حول DZ Market+",
@@ -268,6 +271,7 @@
     "showResults": "عرض النتائج",
     "allCategories": "جميع التصنيفات",
     "allWilayas": "جميع الولايات",
+    "allCommunes": "جميع البلديات",
     "priceRange": "السعر"
   },
   "Errors": {

@@ -11,6 +11,7 @@ import 'core/providers/ad_provider.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/providers/chat_provider.dart';
 import 'core/providers/notification_provider.dart';
+import 'core/providers/theme_provider.dart';
 import 'core/config/app_config.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/localization/locale_provider.dart';
@@ -72,6 +73,7 @@ void main() async {
         }),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const DzMarketPlusApp(),
     ),
@@ -83,15 +85,15 @@ class DzMarketPlusApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<LocaleProvider>(
-      builder: (ctx, localeProvider, _) {
+    return Consumer2<LocaleProvider, ThemeProvider>(
+      builder: (ctx, localeProvider, themeProvider, _) {
         return MaterialApp.router(
           title: 'DZ Market Plus',
           debugShowCheckedModeBanner: false,
           routerConfig: appRouter,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.system,
+          themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
           locale: localeProvider.locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: [

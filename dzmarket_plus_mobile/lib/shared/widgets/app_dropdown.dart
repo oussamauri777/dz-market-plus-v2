@@ -33,11 +33,14 @@ class AppDropdown extends StatelessWidget {
         hintText: hint,
         labelText: label,
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, size: 20, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55))
+            ? SizedBox(
+                width: 36,
+                child: Icon(prefixIcon, size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)),
+              )
             : null,
         filled: true,
         fillColor: Theme.of(context).cardColor,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           borderSide: BorderSide(color: Theme.of(context).dividerColor),
@@ -50,7 +53,7 @@ class AppDropdown extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
         ),
-        hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55), fontSize: 14),
+        hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55), fontSize: 14, overflow: TextOverflow.ellipsis),
       ),
       style: TextStyle(
         fontSize: 14,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/data/algeria_locations.dart';
 import 'package:provider/provider.dart';
 import '../../core/providers/auth_provider.dart';
 
@@ -24,12 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   int _step = 1;
   String _wilaya = '';
 
-  static const _wilayas = ['Alger', 'Oran', 'Constantine', 'Annaba', 'Blida', 'Batna', 'Sétif',
-    'Sidi Bel Abbès', 'Biskra', 'Tébessa', 'Skikda', 'Béjaïa', 'Tlemcen', 'Ouargla', 'Médéa',
-    'Mostaganem', 'M\'Sila', 'Mascara', 'Djelfa', 'Tiaret', 'Tizi Ouzou', 'Laghouat', 'Oum El Bouaghi',
-    'Bouira', 'Tamanrasset', 'Béchar', 'Adrar', 'Chlef', 'Jijel', 'Saïda', 'Guelma', 'Khenchela',
-    'El Oued', 'Souk Ahras', 'Tipaza', 'Mila', 'Aïn Defla', 'Naâma', 'Aïn Témouchent', 'Ghardaïa',
-    'Relizane', 'El Bayadh', 'Illizi', 'Bordj Bou Arréridj', 'Boumerdès', 'El Tarf', 'Tindouf', 'Tissemsilt'];
+  static final _wilayas = algerianWilayas.map((w) => w.name).toList();
 
   @override
   void dispose() {

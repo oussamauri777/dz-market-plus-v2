@@ -190,6 +190,7 @@ class AuthProvider extends ChangeNotifier {
     String? phone,
     String? wilaya,
     String? bio,
+    String? image,
   }) async {
     try {
       final result = await ApiService.updateProfile(
@@ -197,6 +198,7 @@ class AuthProvider extends ChangeNotifier {
         phone: phone,
         wilaya: wilaya,
         bio: bio,
+        image: image,
       );
       if (_currentUser != null) {
         _currentUser = UserModel(

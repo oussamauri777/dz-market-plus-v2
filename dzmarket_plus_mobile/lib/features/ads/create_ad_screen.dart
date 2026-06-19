@@ -15,6 +15,7 @@ import '../../shared/widgets/app_dropdown.dart';
 import '../../shared/widgets/app_button.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../core/data/algeria_locations.dart';
 
 class CreateAdScreen extends StatefulWidget {
   const CreateAdScreen({super.key});
@@ -28,11 +29,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   final _titleCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  final _communeCtrl = TextEditingController();
 
   String _category = '';
   String _subcategory = '';
   String _wilaya = '';
+  String _commune = '';
   String _condition = 'good';
   bool _isNegotiable = false;
   bool _loading = false;
@@ -54,15 +55,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     'Autres': ['Divers'],
   };
 
-  static const _wilayas = [
-    'Alger', 'Oran', 'Constantine', 'Annaba', 'Blida', 'Batna', 'Sétif',
-    'Sidi Bel Abbès', 'Biskra', 'Tébessa', 'Skikda', 'Béjaïa', 'Tlemcen',
-    'Ouargla', 'Médéa', 'Mostaganem', 'M\'Sila', 'Mascara', 'Djelfa',
-    'Tiaret', 'Tizi Ouzou', 'Laghouat', 'Oum El Bouaghi', 'Bouira',
-    'Tamanrasset', 'Béchar', 'Adrar', 'Chlef', 'Jijel', 'Saïda', 'Guelma',
-    'Khenchela', 'El Oued', 'Souk Ahras', 'Tipaza', 'Mila', 'Aïn Defla',
-    'Naâma', 'Aïn Témouchent', 'Ghardaïa', 'Relizane'
-  ];
+  static final _wilayas = algerianWilayas.map((w) => w.name).toList();
 
   static const _conditionValues = ['new', 'like-new', 'good', 'fair', 'refurbished', 'for-parts'];
 
@@ -71,7 +64,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _titleCtrl.dispose();
     _priceCtrl.dispose();
     _descCtrl.dispose();
-    _communeCtrl.dispose();
     _mapController.dispose();
     super.dispose();
   }
@@ -220,7 +212,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       await ApiService.createAd(
         title: _titleCtrl.text.trim(), description: _descCtrl.text.trim(), price: price,
         category: _category, subcategory: _subcategory, wilaya: _wilaya,
-        commune: _communeCtrl.text.trim(), condition: _condition, images: _images,
+        commune: _commune, condition: _condition, images: _images,
         isNegotiable: _isNegotiable, latitude: _selectedLocation?.latitude, longitude: _selectedLocation?.longitude,
       );
 
@@ -340,7 +332,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           if (_error != null) ...[
                             Container(
@@ -475,11 +467,19 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                             validator: (v) => (v == null || v.isEmpty) ? context.l10n.t('Errors.selectWilaya') : null,
                           ),
                           const SizedBox(height: 16),
-                          AppTextField(
-                            controller: _communeCtrl,
-                            hintText: context.l10n.t('Ads.communeHint'),
-                            labelText: context.l10n.t('Ads.commune'),
+                          AppDropdown(
+                            value: _commune.isEmpty ? null : _commune,
+                            hint: context.l10n.t('Ads.commune'),
+                            label: context.l10n.t('Ads.commune'),
                             prefixIcon: Icons.location_on_outlined,
+                            items: _wilaya.isEmpty
+                                ? []
+                                : [DropdownMenuItem(value: null, child: Text(context.l10n.t('Ads.selectCommune'), style: const TextStyle(fontSize: 14))),
+                                    ...getCommunesByWilayaName(_wilaya).map((c) => DropdownMenuItem<String>(
+                                      value: c.name,
+                                      child: Text(c.name, style: const TextStyle(fontSize: 14)),
+                                    ))],
+                            onChanged: _wilaya.isEmpty ? null : (v) => setState(() => _commune = v ?? ''),
                           ),
                           const SizedBox(height: 16),
                           AppDropdown(
@@ -543,9 +543,10 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(context.l10n.t('Ads.location'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+                                    Expanded(
+                                      child: Text(context.l10n.t('Ads.location'), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+                                    ),
                                     TextButton.icon(
                                       onPressed: _getCurrentLocation,
                                       icon: const Icon(Icons.my_location_rounded, size: 16),
@@ -596,8 +597,10 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                                       children: [
                                         Icon(Icons.info_outline_rounded, size: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.39)),
                                         const SizedBox(width: 6),
-                                        Text(context.l10n.t('Ads.mapHint'),
-                                          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.39))),
+                                        Flexible(
+                                          child: Text(context.l10n.t('Ads.mapHint'),
+                                            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.39), overflow: TextOverflow.ellipsis)),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -606,10 +609,12 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                                     padding: const EdgeInsets.only(top: 8),
                                     child: Row(
                                       children: [
-                                                    Icon(Icons.location_on_rounded, size: 14, color: AppTheme.primaryColor.withValues(alpha: 0.7)),
+                                        Icon(Icons.location_on_rounded, size: 14, color: AppTheme.primaryColor.withValues(alpha: 0.7)),
                                         const SizedBox(width: 6),
-                                        Text(context.l10n.t('Ads.selectPosition', params: [_selectedLocation!.latitude.toStringAsFixed(4), _selectedLocation!.longitude.toStringAsFixed(4)]),
-                                          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.39))),
+                                        Flexible(
+                                          child: Text(context.l10n.t('Ads.selectPosition', params: [_selectedLocation!.latitude.toStringAsFixed(4), _selectedLocation!.longitude.toStringAsFixed(4)]),
+                                            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.39))),
+                                        ),
                                       ],
                                     ),
                                   ),

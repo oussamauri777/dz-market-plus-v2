@@ -63,6 +63,11 @@ const UserSchema = new Schema({
     lastPostDate: {
         type: Date,
     },
+    notificationPreferences: {
+        pushMessages: { type: Boolean, default: true },
+        pushAds: { type: Boolean, default: true },
+        emailNotifications: { type: Boolean, default: true },
+    },
 }, { timestamps: true });
 
 const User = models.User || model('User', UserSchema);

@@ -10,6 +10,7 @@ class ReviewCard extends StatelessWidget {
   final String comment;
   final String date;
   final String? adTitle;
+  final VoidCallback? onTap;
 
   const ReviewCard({
     super.key,
@@ -19,6 +20,7 @@ class ReviewCard extends StatelessWidget {
     required this.comment,
     required this.date,
     this.adTitle,
+    this.onTap,
   });
 
   @override
@@ -35,47 +37,54 @@ class ReviewCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                backgroundImage: userImage != null
-                    ? NetworkImage(userImage!)
-                    : null,
-                child: userImage == null
-                    ? Text(
-                        userName.isNotEmpty
-                            ? userName[0].toUpperCase()
-                            : '?',
-                        style: const TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      )
-                    : null,
+              GestureDetector(
+                onTap: onTap,
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  backgroundImage: userImage != null
+                      ? NetworkImage(userImage!)
+                      : null,
+                  child: userImage == null
+                      ? Text(
+                          userName.isNotEmpty
+                              ? userName[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
+                      : null,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      userName,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
+                    GestureDetector(
+                      onTap: onTap,
+                      child: Text(
+                        userName,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 2),
                     _StarRating(rating: rating, size: 14),
+                    const SizedBox(height: 2),
+                    Text(
+                      date,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
+                      ),
+                    ),
                   ],
-                ),
-              ),
-              Text(
-                date,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
                 ),
               ),
             ],

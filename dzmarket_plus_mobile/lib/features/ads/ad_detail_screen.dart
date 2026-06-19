@@ -257,11 +257,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
           future: ApiService.getUserProfile(ad.userId),
           builder: (context, sellerSnapshot) {
             final sellerProfile = sellerSnapshot.data;
-            final sellerUser = sellerProfile?['user'] ?? {};
-            final sellerStats = sellerProfile?['stats'] ?? {};
-            final sellerPhone = sellerUser['phone'];
-            final averageRating = (sellerStats['averageRating'] ?? 0.0).toDouble();
-            final totalReviews = sellerStats['totalReviews'] ?? 0;
+            final sellerPhone = sellerProfile?['user']?['phone'];
 
             return Scaffold(
               body: CustomScrollView(
@@ -621,29 +617,13 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                           ],
                                         ),
                                         const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.star_rounded, color: AppTheme.yellowColor, size: 14),
-                                            const SizedBox(width: 2),
-                                            Text(
-                                              averageRating > 0 ? averageRating.toStringAsFixed(1) : context.l10n.t('Profile.notSpecified'),
-                                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                            ),
-                                            if (totalReviews > 0) ...[
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '($totalReviews ${context.l10n.t('Profile.reviewsCount')})',
-                                                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)),
-                                              ),
-                                            ],
-                                          ],
+                                        GestureDetector(
+                                          onTap: () => context.push('/user/${ad.userId}'),
+                                          child: Text(context.l10n.t('Profile.viewProfile'),
+                                            style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 13)),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => context.push('/user/${ad.userId}'),
-                                    child: Text(context.l10n.t('Profile.viewProfile'), style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),
@@ -687,10 +667,14 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                         const SizedBox(height: 16),
 
                         // Reviews section
-                        FutureBuilder<List<Map<String, dynamic>>>(
-                          future: ApiService.getUserReviews(ad.userId),
-                          builder: (context, reviewsSnapshot) {
-                            final reviews = reviewsSnapshot.data ?? [];
+                        FutureBuilder<Map<String, dynamic>>(
+                          future: ApiService.getAdReviewsWithStats(ad.id),
+                          builder: (context, snapshot) {
+                            final data = snapshot.data;
+                            final reviews = (data?['reviews'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+                            final stats = data?['stats'] as Map<String, dynamic>?;
+                            final avgRating = (stats?['averageRating'] ?? 0).toDouble();
+                            final totalRev = stats?['totalReviews'] ?? 0;
                             return _infoCard(
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,27 +682,42 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: Text(context.l10n.t('Profile.sellerReviews'),
+                                        child: Text(context.l10n.t('Ads.reviews'),
                                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                       TextButton(
-                                        onPressed: () => _showAddReviewDialog(ad.userId, ad.userName),
-                                        child: Text(context.l10n.t('Ads.reviews'),
+                                        onPressed: () => _showAddReviewDialog(ad.userId, ad.title),
+                                        child: Text(context.l10n.t('Ads.writeReview'),
                                           style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
+                                  if (totalRev > 0) ...[
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        ...List.generate(5, (i) => Icon(
+                                          i < avgRating.round() ? Icons.star_rounded : Icons.star_border_rounded,
+                                          color: AppTheme.yellowColor, size: 20,
+                                        )),
+                                        const SizedBox(width: 8),
+                                        Text(avgRating.toStringAsFixed(1), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                        const SizedBox(width: 4),
+                                        Text('($totalRev)', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55))),
+                                      ],
+                                    ),
+                                  ],
+                                  const SizedBox(height: 12),
                                   if (reviews.isEmpty)
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 20),
-                                        child: Center(
-                                          child: Text(context.l10n.t('Profile.noReviewsDetail'),
-                                            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55))),
-                                        ),
-                                      )
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 20),
+                                      child: Center(
+                                        child: Text(context.l10n.t('Profile.noReviewsDetail'),
+                                          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55))),
+                                      ),
+                                    )
                                   else ...[
                                     ...reviews.take(3).map((review) => Padding(
                                       padding: const EdgeInsets.only(bottom: 12),
@@ -727,18 +726,10 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                         userImage: review['buyer']?['image'],
                                         rating: (review['rating'] ?? 5).toDouble(),
                                         comment: review['comment'] ?? '',
-                                        date: review['createdAt'] ?? '',
+                                        date: review['createdAt'] != null ? timeago.format(DateTime.parse(review['createdAt']), locale: context.l10n.locale.languageCode) : '',
+                                        onTap: () => context.push('/user/${review['buyer']?['_id'] ?? review['buyer']}'),
                                       ),
                                     )),
-                                    if (reviews.length > 3)
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: TextButton(
-                                          onPressed: () => context.push('/user/${ad.userId}'),
-                                          child: Text(context.l10n.t('Profile.viewAllReviews'),
-                                            style: TextStyle(color: AppTheme.primaryColor)),
-                                        ),
-                                      ),
                                   ],
                                 ],
                               ),

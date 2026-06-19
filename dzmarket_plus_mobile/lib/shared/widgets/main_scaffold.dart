@@ -93,7 +93,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           AnimatedPadding(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
-            padding: EdgeInsets.only(bottom: effectiveNavVisible ? 96 : 0),
+            padding: EdgeInsets.only(bottom: effectiveNavVisible ? 80 : 0),
             child: NotificationListener<ScrollNotification>(
               onNotification: _onScroll,
               child: widget.child,
@@ -142,43 +142,30 @@ class _FloatingNavBar extends StatelessWidget {
     final navColor = isDark ? const Color(0xFF1C1C1E) : AppTheme.surfaceColor;
 
     return SizedBox(
-      height: 64,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Center(
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.92,
-              height: 64,
-              decoration: BoxDecoration(
-                color: navColor,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(child: Center(child: _NavItem(def: items[0], selected: currentIndex == 0, onTap: () => onTap(0)))),
-                  Expanded(child: Center(child: _NavItem(def: items[1], selected: currentIndex == 1, onTap: () => onTap(1)))),
-                  const SizedBox(width: 44),
-                  Expanded(child: Center(child: _NavItem(def: items[2], selected: currentIndex == 2, onTap: () => onTap(2)))),
-                  Expanded(child: Center(child: _NavItem(def: items[3], selected: currentIndex == 3, onTap: () => onTap(3)))),
-                ],
-              ),
+      height: 56,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.92,
+        height: 56,
+        decoration: BoxDecoration(
+          color: navColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
             ),
-          ),
-          Positioned(
-            top: -22,
-            left: 0,
-            right: 0,
-            child: Center(child: _FloatingAddButton(onTap: onPostTap)),
-          ),
-        ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(child: Center(child: _NavItem(def: items[0], selected: currentIndex == 0, onTap: () => onTap(0)))),
+            Expanded(child: Center(child: _NavItem(def: items[1], selected: currentIndex == 1, onTap: () => onTap(1)))),
+            Expanded(child: Center(child: _FloatingAddButton(onTap: onPostTap))),
+            Expanded(child: Center(child: _NavItem(def: items[2], selected: currentIndex == 2, onTap: () => onTap(2)))),
+            Expanded(child: Center(child: _NavItem(def: items[3], selected: currentIndex == 3, onTap: () => onTap(3)))),
+          ],
+        ),
       ),
     );
   }

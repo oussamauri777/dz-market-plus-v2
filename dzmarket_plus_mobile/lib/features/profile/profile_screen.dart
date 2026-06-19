@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/ad_provider.dart';
+import '../../core/providers/theme_provider.dart';
 import '../../core/models/user.dart';
 import '../../core/services/api_service.dart';
 import '../../core/localization/locale_provider.dart';
@@ -324,6 +325,14 @@ class _ProfileScreenState extends State<ProfileScreen>
       _SettingsSection(context.l10n.t('Profile.sectionPreferences'), [
         _SettingsItem(Icons.notifications_outlined, context.l10n.t('Profile.notifications'), () => context.push('/notifications-settings')),
         _SettingsItem(Icons.language_rounded, context.l10n.t('Profile.language'), () => _showLanguagePicker()),
+        Consumer<ThemeProvider>(
+          builder: (ctx, themeProvider, _) => _SettingsSwitch(
+            Icons.dark_mode_rounded,
+            context.l10n.t('Profile.darkMode'),
+            themeProvider.isDark,
+            (v) => themeProvider.setDarkMode(v),
+          ),
+        ),
       ]),
       const SizedBox(height: 16),
       _SettingsSection(context.l10n.t('Profile.sectionHelp'), [
@@ -477,6 +486,33 @@ class _SettingsItem extends StatelessWidget {
     title: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
     trailing: Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55), size: 20),
     onTap: onTap,
+    dense: true,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+  );
+}
+
+class _SettingsSwitch extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool value;
+  final void Function(bool) onChanged;
+  const _SettingsSwitch(this.icon, this.label, this.value, this.onChanged);
+  @override
+  Widget build(BuildContext context) => ListTile(
+    leading: Container(
+      width: 36, height: 36,
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(icon, color: Theme.of(context).colorScheme.onSurface, size: 20),
+    ),
+    title: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+    trailing: Switch.adaptive(
+      value: value,
+      activeTrackColor: AppTheme.primaryColor,
+      onChanged: onChanged,
+    ),
     dense: true,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
   );

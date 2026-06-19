@@ -10,6 +10,7 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/app_badge.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/shimmer_grid.dart';
+import '../../core/data/algeria_locations.dart';
 
 const _subcategoriesByCategory = {
   'Véhicules': ['Voitures', 'Motos', 'Camions', 'Pièces', 'Engins', 'Bateaux'],
@@ -455,7 +456,6 @@ class _FilterDrawerState extends State<_FilterDrawer> {
   late String _condition;
   late RangeValues _priceRange;
   late bool _isAiSearch;
-  late final TextEditingController _communeCtrl;
 
   static const _categories = [
     '', 'Véhicules', 'Immobilier', 'Informatique & Multimédia',
@@ -463,11 +463,7 @@ class _FilterDrawerState extends State<_FilterDrawer> {
     'Animaux', 'Loisirs & Divertissement', 'Autres',
   ];
 
-  static const _wilayas = [
-    '', 'Alger', 'Oran', 'Constantine', 'Annaba', 'Blida', 'Batna', 'Sétif',
-    'Tizi Ouzou', 'Béjaïa', 'Skikda', 'Tlemcen', 'Médéa', 'Mostaganem',
-    'Ouargla', 'Djelfa', 'Tiaret', 'Biskra', 'Sidi Bel Abbès', 'Guelma', 'Jijel',
-  ];
+  static final _wilayas = ['', ...algerianWilayas.map((w) => w.name)];
 
   static const _conditions = [
     '', 'new', 'like-new', 'excellent', 'good', 'fair', 'refurbished', 'for-parts',
@@ -486,12 +482,10 @@ class _FilterDrawerState extends State<_FilterDrawer> {
       (widget.initialMaxPrice ?? 50000000).toDouble(),
     );
     _isAiSearch = widget.initialIsAiSearch;
-    _communeCtrl = TextEditingController(text: _commune);
   }
 
   @override
   void dispose() {
-    _communeCtrl.dispose();
     super.dispose();
   }
 
@@ -648,9 +642,10 @@ class _FilterDrawerState extends State<_FilterDrawer> {
                   const SizedBox(height: 16),
                   Text('Commune', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 8),
-                  TextField(
+                  DropdownButtonFormField<String>(
+                    value: _commune.isEmpty ? null : _commune,
                     decoration: InputDecoration(
-                      hintText: 'Ex: Hydra, Sidi M\'Hamed',
+                      hintText: context.l10n.t('Search.allCommunes'),
                       isDense: true,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -660,8 +655,14 @@ class _FilterDrawerState extends State<_FilterDrawer> {
                       hintStyle: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)),
                     ),
                     style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
-                    controller: _communeCtrl,
-                    onChanged: (v) => _commune = v,
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(context.l10n.t('Search.allCommunes'), style: const TextStyle(fontSize: 14))),
+                      ...getCommunesByWilayaName(_wilaya).map((c) => DropdownMenuItem(
+                        value: c.name,
+                        child: Text(c.name, style: const TextStyle(fontSize: 14)),
+                      )),
+                    ],
+                    onChanged: (v) => setState(() => _commune = v ?? ''),
                   ),
                 ],
                 const SizedBox(height: 16),

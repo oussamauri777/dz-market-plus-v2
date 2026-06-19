@@ -189,6 +189,7 @@ class ApiService {
     String? phone,
     String? wilaya,
     String? bio,
+    String? image,
   }) async {
     try {
       final headers = await _authHeaders();
@@ -200,6 +201,7 @@ class ApiService {
           if (phone != null) 'phone': phone,
           if (wilaya != null) 'wilaya': wilaya,
           if (bio != null) 'bio': bio,
+          if (image != null) 'image': image,
         }),
       );
       if (response.statusCode == 200) {
@@ -364,6 +366,24 @@ class ApiService {
     return List<Map<String, dynamic>>.from(result['reviews'] ?? []);
   }
 
+  static Future<Map<String, dynamic>> getAdReviewsWithStats(String adId, {int page = 1, int limit = 20}) async {
+    try {
+      final response = await http.get(Uri.parse('${AppConfig.baseUrl}/reviews?adId=$adId&page=$page&limit=$limit'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'reviews': List<Map<String, dynamic>>.from(data['reviews'] ?? []),
+          'total': data['pagination']?['total'] ?? 0,
+          'stats': data['stats'],
+        };
+      } else {
+        throw Exception('Failed to load ad reviews: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('API Error: $e');
+    }
+  }
+
   static Future<Map<String, dynamic>> getReviewsWithPagination(String sellerId, {int page = 1, int limit = 20}) async {
     try {
       final response = await http.get(Uri.parse('${AppConfig.baseUrl}/reviews?sellerId=$sellerId&page=$page&limit=$limit'));
@@ -497,5 +517,40 @@ class ApiService {
       commune: json['location'] is Map ? json['location']['commune'] : null,
       embedding: json['embedding'] != null ? List<double>.from(json['embedding']) : null,
     );
+  }
+
+  // ─────────────── Notification Preferences ───────────────
+
+  static Future<Map<String, dynamic>> getNotificationPreferences() async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/users/notification-preferences'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Failed to load notification preferences');
+  }
+
+  static Future<Map<String, dynamic>> updateNotificationPreferences({
+    required bool pushMessages,
+    required bool pushAds,
+    required bool emailNotifications,
+  }) async {
+    final headers = await _authHeaders();
+    final response = await http.put(
+      Uri.parse('${AppConfig.baseUrl}/users/notification-preferences'),
+      headers: headers,
+      body: json.encode({
+        'pushMessages': pushMessages,
+        'pushAds': pushAds,
+        'emailNotifications': emailNotifications,
+      }),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Failed to update notification preferences');
   }
 }

@@ -92,6 +92,23 @@ export async function GET(req: Request) {
 
         const total = await Review.countDocuments(filter);
 
+        // Compute stats (average rating & breakdown) for ad reviews
+        let stats = null;
+        if (adId) {
+            const allReviews = await Review.find(filter).select('rating');
+            const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+            let sum = 0;
+            for (const r of allReviews) {
+                breakdown[r.rating as keyof typeof breakdown]++;
+                sum += r.rating;
+            }
+            stats = {
+                averageRating: allReviews.length > 0 ? Math.round((sum / allReviews.length) * 10) / 10 : 0,
+                totalReviews: allReviews.length,
+                ratingBreakdown: breakdown,
+            };
+        }
+
         return NextResponse.json({
             reviews,
             pagination: {
@@ -99,7 +116,8 @@ export async function GET(req: Request) {
                 pages: Math.ceil(total / limit),
                 page,
                 limit
-            }
+            },
+            stats
         });
     } catch (error) {
         console.log("[REVIEWS_GET]", error);

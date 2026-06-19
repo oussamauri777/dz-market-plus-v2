@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "902309003740",
+    "project_id": "dzmarketapp-b9855",
+    "storage_bucket": "dzmarketapp-b9855.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:902309003740:android:7087522792b099b2784f19",
+        "android_client_info": {
+          "package_name": "com.oussamauri777.dzmarket_plus_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAlGF2EcxlyTVQmUrA22qDcmD1NxEmaME"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

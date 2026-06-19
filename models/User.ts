@@ -68,6 +68,10 @@ const UserSchema = new Schema({
         pushAds: { type: Boolean, default: true },
         emailNotifications: { type: Boolean, default: true },
     },
+    deviceTokens: {
+        type: [String],
+        default: [],
+    },
 }, { timestamps: true });
 
 const User = models.User || model('User', UserSchema);

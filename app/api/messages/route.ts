@@ -7,6 +7,7 @@ import Conversation from '@/models/Conversation';
 import Ad from '@/models/Ad';
 import Notification from '@/models/Notification';
 import { pusherServer } from '@/lib/pusher';
+import { sendPushToUser } from '@/lib/services/fcm';
 import { getUserIdFromRequest } from '@/lib/mobile-auth';
 
 // GET - Fetch messages for a conversation
@@ -138,6 +139,21 @@ export async function POST(req: Request) {
                     conversationId: conversationId,
                     senderId: userId,
                     adTitle: (adDoc as any)?.title || '',
+                },
+            });
+
+            // Send FCM push notification
+            sendPushToUser(recipientId.toString(), {
+                title: senderName,
+                body: content
+                    ? content.substring(0, 120)
+                    : type === 'image' ? '📷 Image'
+                    : type === 'audio' ? '🎤 Voice Message'
+                    : '📎 File',
+                data: {
+                    type: 'new_message',
+                    conversationId: conversationId,
+                    senderId: userId,
                 },
             });
         }

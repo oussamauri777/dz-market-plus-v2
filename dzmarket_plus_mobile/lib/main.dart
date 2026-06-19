@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -5,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/services/push_notification_service.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/ad_provider.dart';
@@ -36,9 +38,14 @@ void main() async {
   await notificationsPlugin.initialize(
     settings: initSettings,
     onDidReceiveNotificationResponse: (response) {
-      final conversationId = response.payload;
-      if (conversationId != null && conversationId.isNotEmpty) {
-        navigateToConversation(conversationId);
+      final payload = response.payload;
+      if (payload == null || payload.isEmpty) return;
+      try {
+        final data = json.decode(payload);
+        final convId = data['conversationId'] as String?;
+        if (convId != null) navigateToConversation(convId);
+      } catch (_) {
+        navigateToConversation(payload);
       }
     },
   );
@@ -47,8 +54,21 @@ void main() async {
   if (launchDetails?.didNotificationLaunchApp ?? false) {
     final payload = launchDetails!.notificationResponse?.payload;
     if (payload != null && payload.isNotEmpty) {
-      navigateToConversation(payload);
+      try {
+        final data = json.decode(payload);
+        final convId = data['conversationId'] as String?;
+        if (convId != null) navigateToConversation(convId);
+      } catch (_) {
+        navigateToConversation(payload);
+      }
     }
+  }
+
+  // Initialize Firebase Cloud Messaging
+  try {
+    await PushNotificationService.init(notificationsPlugin);
+  } catch (e) {
+    // Firebase not available (emulator, etc.)
   }
 
   final prefs = await SharedPreferences.getInstance();

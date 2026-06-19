@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import Notification from '@/models/Notification';
 import { getUserIdFromRequest } from '@/lib/mobile-auth';
+import { sendPushToUser } from '@/lib/services/fcm';
 
 export async function GET(req: Request) {
     try {
@@ -76,6 +77,13 @@ export async function POST(req: Request) {
             title,
             body,
             data: data || {},
+        });
+
+        // Send FCM push notification
+        sendPushToUser(targetUserId, {
+            title,
+            body,
+            data: { type, ...(data || {}) },
         });
 
         return NextResponse.json(notification);

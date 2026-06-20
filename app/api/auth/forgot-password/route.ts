@@ -62,7 +62,11 @@ export async function POST(req: Request) {
         logDebug("Update result:", updateResult);
 
         // Create reset URL
-        const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL 
+            || (process.env.VERCEL_PROJECT_PRODUCTION_URL 
+                ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` 
+                : 'https://dz-market-plus-v2.vercel.app');
+        const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
 
         try {
             await sendPasswordResetEmail(user.email, resetUrl);

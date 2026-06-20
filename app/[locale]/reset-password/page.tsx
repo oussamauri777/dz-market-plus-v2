@@ -22,6 +22,12 @@ export default function ResetPasswordPage() {
         if (!token) {
             setStatus('error');
             setErrorMessage('Jeton de réinitialisation manquant ou invalide.');
+            return;
+        }
+        // Try to open the Android app via custom scheme
+        if (/android/i.test(navigator.userAgent)) {
+            const appLink = `dzmarketplus://reset-password?token=${encodeURIComponent(token)}`;
+            window.location.href = appLink;
         }
     }, [token]);
 

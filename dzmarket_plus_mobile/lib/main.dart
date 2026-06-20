@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,8 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:app_links/app_links.dart';
+import 'package:go_router/go_router.dart';
 import 'core/router/app_router.dart';
 import 'core/services/push_notification_service.dart';
 import 'core/theme/app_theme.dart';
@@ -105,12 +108,45 @@ class DzMarketPlusApp extends StatefulWidget {
 }
 
 class _DzMarketPlusAppState extends State<DzMarketPlusApp> {
+  StreamSubscription<Uri>? _deepLinkSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PushNotificationService.init(notificationsPlugin).catchError((_) {});
+      _initDeepLinks();
     });
+  }
+
+  @override
+  void dispose() {
+    _deepLinkSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initDeepLinks() async {
+    final appLinks = AppLinks();
+
+    try {
+      final initialUri = await appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri);
+      }
+    } catch (_) {}
+
+    _deepLinkSub = appLinks.uriLinkStream.listen(_handleDeepLink);
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme == 'dzmarketplus' && uri.host == 'reset-password') {
+      final token = uri.queryParameters['token'];
+      if (token != null && token.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          appRouter.go('/reset-password?token=$token');
+        });
+      }
+    }
   }
 
   @override

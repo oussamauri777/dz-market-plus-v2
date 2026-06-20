@@ -33,12 +33,13 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         await auth.googleSignIn.signOut();
         googleUser = await auth.googleSignIn.signIn();
-      } catch (_) {
-        // Popup may be blocked on web — show user-friendly message
-        if (kIsWeb && mounted) {
+      } catch (e) {
+        if (mounted) {
           setState(() {
             _googleLoading = false;
-            _error = context.l10n.t('Auth.googlePopupBlocked');
+            _error = kIsWeb
+                ? context.l10n.t('Auth.googlePopupBlocked')
+                : 'Google Sign-In: ${e.toString().replaceAll('Exception: ', '')}';
           });
         }
         return;

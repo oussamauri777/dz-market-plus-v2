@@ -6,8 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'core/services/push_notification_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/router/app_router.dart';
+import 'core/services/push_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/ad_provider.dart';
 import 'core/providers/auth_provider.dart';
@@ -22,6 +23,10 @@ final FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotifica
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {}
 
   final apiHost = const String.fromEnvironment('API_HOST');
   if (apiHost.isNotEmpty) {
@@ -64,13 +69,6 @@ void main() async {
     }
   }
 
-  // Initialize Firebase Cloud Messaging
-  try {
-    await PushNotificationService.init(notificationsPlugin);
-  } catch (e) {
-    // Firebase not available (emulator, etc.)
-  }
-
   final prefs = await SharedPreferences.getInstance();
   onboardingComplete = prefs.getBool('onboarding_complete') ?? (prefs.getString('auth_token') != null);
 
@@ -100,8 +98,20 @@ void main() async {
   );
 }
 
-class DzMarketPlusApp extends StatelessWidget {
+class DzMarketPlusApp extends StatefulWidget {
   const DzMarketPlusApp({super.key});
+  @override
+  State<DzMarketPlusApp> createState() => _DzMarketPlusAppState();
+}
+
+class _DzMarketPlusAppState extends State<DzMarketPlusApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationService.init(notificationsPlugin).catchError((_) {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

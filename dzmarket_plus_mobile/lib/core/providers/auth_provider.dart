@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,8 +27,8 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider() {
     _googleSignIn = GoogleSignIn(
-      clientId: AppConfig.googleClientId,
-      serverClientId: AppConfig.googleClientId,
+      clientId: kIsWeb ? AppConfig.googleClientId : null,
+      serverClientId: kIsWeb ? AppConfig.googleClientId : null,
       scopes: ['email', 'profile'],
     );
     _loadSession();
@@ -98,16 +99,21 @@ class AuthProvider extends ChangeNotifier {
   Future<void> completeGoogleSignIn(GoogleSignInAccount googleUser) async {
     try {
       final auth = await googleUser.authentication;
+      final email = googleUser.email;
+      final name = googleUser.displayName;
+      final image = googleUser.photoUrl;
+      final googleId = googleUser.id;
+      final idToken = kIsWeb ? auth.idToken : null;
 
       final response = await http.post(
         Uri.parse('${AppConfig.baseUrl}/auth/mobile-google'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email': googleUser.email,
-          'name': googleUser.displayName,
-          'image': googleUser.photoUrl,
-          'googleId': googleUser.id,
-          'idToken': auth.idToken,
+          'email': email,
+          'name': name ?? '',
+          'image': image ?? '',
+          'googleId': googleId,
+          'idToken': idToken,
         }),
       );
 

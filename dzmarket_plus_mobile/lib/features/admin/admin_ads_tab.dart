@@ -14,27 +14,39 @@ class AdminAdsTab extends StatefulWidget {
 class _AdminAdsTabState extends State<AdminAdsTab> {
   List<dynamic> _ads = [];
   bool _loading = true;
+  bool _loadingMore = false;
   String? _error;
   int _page = 1;
   bool _hasMore = true;
   final _searchCtrl = TextEditingController();
+  final _scrollCtrl = ScrollController();
   String _search = '';
   String _statusFilter = '';
 
   @override
   void initState() {
     super.initState();
+    _scrollCtrl.addListener(_onScroll);
     _loadAds();
   }
 
   @override
   void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
 
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200 && _hasMore && !_loading && !_loadingMore) {
+      _page++;
+      _loadAds(append: true);
+    }
+  }
+
   Future<void> _loadAds({bool append = false}) async {
-    if (!append) setState(() { _loading = true; _error = null; });
+    if (append) { setState(() => _loadingMore = true); } else { setState(() { _loading = true; _error = null; }); }
     try {
       final data = await ApiService.getAdminAds(page: _page, search: _search, status: _statusFilter);
       final ads = data['ads'] ?? data['data'] ?? [];
@@ -44,10 +56,11 @@ class _AdminAdsTabState extends State<AdminAdsTab> {
           if (append) { _ads.addAll(List.from(ads)); } else { _ads = List.from(ads); }
           _hasMore = _ads.length < total;
           _loading = false;
+          _loadingMore = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted) setState(() { _error = e.toString(); _loading = false; _loadingMore = false; });
     }
   }
 
@@ -134,6 +147,7 @@ class _AdminAdsTabState extends State<AdminAdsTab> {
     return RefreshIndicator(
       onRefresh: () async { _page = 1; await _loadAds(); },
       child: ListView.builder(
+        controller: _scrollCtrl,
         itemCount: _ads.length + (_hasMore ? 1 : 0),
         itemBuilder: (ctx, i) {
           if (i == _ads.length) {
@@ -223,7 +237,7 @@ class _AdTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      if (category.isNotEmpty) _Tag(category),
+                      if (category.isNotEmpty) Flexible(child: _Tag(category)),
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -231,7 +245,7 @@ class _AdTile extends StatelessWidget {
                           color: status == 'active' ? AppTheme.greenColor.withValues(alpha: 0.12) : AppTheme.redColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+                        child: Text(status, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
                             color: status == 'active' ? AppTheme.greenColor : AppTheme.redColor)),
                       ),
                     ],

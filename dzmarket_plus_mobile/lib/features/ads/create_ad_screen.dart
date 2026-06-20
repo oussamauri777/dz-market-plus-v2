@@ -29,6 +29,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   final _titleCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _searchLocationCtrl = TextEditingController();
 
   String _category = '';
   String _subcategory = '';
@@ -37,6 +38,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   String _condition = 'good';
   bool _isNegotiable = false;
   bool _loading = false;
+  bool _searchingLocation = false;
   String? _error;
   LatLng? _selectedLocation;
   final MapController _mapController = MapController();
@@ -64,6 +66,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _titleCtrl.dispose();
     _priceCtrl.dispose();
     _descCtrl.dispose();
+    _searchLocationCtrl.dispose();
     _mapController.dispose();
     super.dispose();
   }
@@ -175,6 +178,35 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       } finally {
         if (mounted) Navigator.pop(context);
       }
+    }
+  }
+
+  Future<void> _searchPlace() async {
+    final query = _searchLocationCtrl.text.trim();
+    if (query.isEmpty) return;
+    setState(() => _searchingLocation = true);
+    try {
+      final url = Uri.parse('https://nominatim.openstreetmap.org/search?format=json&q=${Uri.encodeComponent(query)}&limit=1&accept-language=fr');
+      final response = await http.get(url, headers: {'User-Agent': 'dzmarket_plus_mobile'});
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as List;
+        if (data.isNotEmpty) {
+          final lat = double.parse(data[0]['lat'] as String);
+          final lon = double.parse(data[0]['lon'] as String);
+          final point = LatLng(lat, lon);
+          setState(() => _selectedLocation = point);
+          _mapController.move(point, 14.0);
+          final wilayaName = await _getWilayaFromCoords(lat, lon);
+          if (wilayaName != null) {
+            final matched = _matchWilaya(wilayaName);
+            if (matched != null) setState(() => _wilaya = matched);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Search error: $e");
+    } finally {
+      if (mounted) setState(() => _searchingLocation = false);
     }
   }
 
@@ -554,6 +586,27 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                                       style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
                                     ),
                                   ],
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _searchLocationCtrl,
+                                  decoration: InputDecoration(
+                                    hintText: 'Chercher un endroit...',
+                                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                                    suffixIcon: _searchingLocation
+                                        ? const SizedBox(width: 20, height: 20, child: Padding(
+                                            padding: EdgeInsets.all(12),
+                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          ))
+                                        : IconButton(
+                                            icon: const Icon(Icons.send_rounded, size: 18),
+                                            onPressed: _searchPlace,
+                                          ),
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  onSubmitted: (_) => _searchPlace(),
                                 ),
                                 const SizedBox(height: 8),
                                 Container(

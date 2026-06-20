@@ -14,18 +14,35 @@ class AdminMessagesTab extends StatefulWidget {
 class _AdminMessagesTabState extends State<AdminMessagesTab> {
   List<dynamic> _conversations = [];
   bool _loading = true;
+  bool _loadingMore = false;
   String? _error;
   int _page = 1;
   bool _hasMore = true;
+  final _scrollCtrl = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollCtrl.addListener(_onScroll);
     _loadConversations();
   }
 
+  @override
+  void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200 && _hasMore && !_loading && !_loadingMore) {
+      _page++;
+      _loadConversations(append: true);
+    }
+  }
+
   Future<void> _loadConversations({bool append = false}) async {
-    if (!append) setState(() { _loading = true; _error = null; });
+    if (append) { setState(() => _loadingMore = true); } else { setState(() { _loading = true; _error = null; }); }
     try {
       final data = await ApiService.getAdminMessages(page: _page, limit: 10);
       final conversations = data['conversations'] ?? data['data'] ?? [];
@@ -35,10 +52,11 @@ class _AdminMessagesTabState extends State<AdminMessagesTab> {
           if (append) { _conversations.addAll(List.from(conversations)); } else { _conversations = List.from(conversations); }
           _hasMore = _conversations.length < total;
           _loading = false;
+          _loadingMore = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted) setState(() { _error = e.toString(); _loading = false; _loadingMore = false; });
     }
   }
 
@@ -58,6 +76,7 @@ class _AdminMessagesTabState extends State<AdminMessagesTab> {
     return RefreshIndicator(
       onRefresh: () async { _page = 1; await _loadConversations(); },
       child: ListView.builder(
+        controller: _scrollCtrl,
         padding: const EdgeInsets.all(16),
         itemCount: _conversations.length + (_hasMore ? 1 : 0),
         itemBuilder: (ctx, i) {

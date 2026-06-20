@@ -133,6 +133,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
   void _showAddReviewDialog(String sellerId, String sellerName) {
     final commentCtrl = TextEditingController();
     int rating = 5;
+    final outerContext = context;
     showDialog(
       context: context,
       builder: (ctx) {
@@ -181,7 +182,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                     if (comment.isEmpty) return;
                     Navigator.pop(ctx);
                     showDialog(
-                      context: context,
+                      context: outerContext,
                       barrierDismissible: false,
                       builder: (_) => const Center(child: CircularProgressIndicator()),
                     );
@@ -193,8 +194,8 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                         comment: comment,
                       );
                       if (mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        Navigator.pop(outerContext);
+                        ScaffoldMessenger.of(outerContext).showSnackBar(
                           SnackBar(content: Text(context.l10n.t('Profile.reviewSubmitted'))),
                         );
                         _adFuture = ApiService.getAdById(widget.adId);
@@ -202,8 +203,8 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                       }
                     } catch (e) {
                       if (mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        Navigator.pop(outerContext);
+                        ScaffoldMessenger.of(outerContext).showSnackBar(
                           SnackBar(content: Text('${context.l10n.t('Common.error')}: $e')),
                         );
                       }

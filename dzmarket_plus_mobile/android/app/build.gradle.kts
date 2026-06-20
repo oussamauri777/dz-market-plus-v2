@@ -34,8 +34,8 @@ android {
         applicationId = "com.oussamauri777.dzmarket_plus_mobile"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.0.2"
     }
 
     signingConfigs {

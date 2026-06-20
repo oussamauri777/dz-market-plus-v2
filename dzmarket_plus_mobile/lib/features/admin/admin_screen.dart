@@ -110,9 +110,9 @@ class _AdminScreenState extends State<AdminScreen> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(Icons.arrow_back_rounded),
-                title: Text(context.l10n.t('Common.back')),
-                onTap: () => context.pop(),
+                leading: const Icon(Icons.logout_rounded),
+                title: const Text('Sortir'),
+                onTap: () => context.go('/'),
               ),
               const SizedBox(height: 8),
             ],

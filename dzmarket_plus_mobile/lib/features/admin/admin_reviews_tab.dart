@@ -14,18 +14,35 @@ class AdminReviewsTab extends StatefulWidget {
 class _AdminReviewsTabState extends State<AdminReviewsTab> {
   List<dynamic> _reviews = [];
   bool _loading = true;
+  bool _loadingMore = false;
   String? _error;
   int _page = 1;
   bool _hasMore = true;
+  final _scrollCtrl = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollCtrl.addListener(_onScroll);
     _loadReviews();
   }
 
+  @override
+  void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200 && _hasMore && !_loading && !_loadingMore) {
+      _page++;
+      _loadReviews(append: true);
+    }
+  }
+
   Future<void> _loadReviews({bool append = false}) async {
-    if (!append) setState(() { _loading = true; _error = null; });
+    if (append) { setState(() => _loadingMore = true); } else { setState(() { _loading = true; _error = null; }); }
     try {
       final data = await ApiService.getAdminReviews(page: _page, limit: 10);
       final reviews = data['reviews'] ?? data['data'] ?? [];
@@ -35,10 +52,11 @@ class _AdminReviewsTabState extends State<AdminReviewsTab> {
           if (append) { _reviews.addAll(List.from(reviews)); } else { _reviews = List.from(reviews); }
           _hasMore = _reviews.length < total;
           _loading = false;
+          _loadingMore = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted) setState(() { _error = e.toString(); _loading = false; _loadingMore = false; });
     }
   }
 
@@ -77,6 +95,7 @@ class _AdminReviewsTabState extends State<AdminReviewsTab> {
     return RefreshIndicator(
       onRefresh: () async { _page = 1; await _loadReviews(); },
       child: ListView.builder(
+        controller: _scrollCtrl,
         padding: const EdgeInsets.all(16),
         itemCount: _reviews.length + (_hasMore ? 1 : 0),
         itemBuilder: (ctx, i) {

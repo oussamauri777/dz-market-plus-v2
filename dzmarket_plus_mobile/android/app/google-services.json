@@ -12,7 +12,12 @@
           "package_name": "com.oussamauri777.dzmarket_plus_mobile"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "850639876917-c8rn55bl528mi4aa5puv5flo9hn1ldck.apps.googleusercontent.com",
+          "client_type": 2
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCAlGF2EcxlyTVQmUrA22qDcmD1NxEmaME"

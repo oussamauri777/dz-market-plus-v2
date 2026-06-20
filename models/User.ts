@@ -20,6 +20,10 @@ const UserSchema = new Schema({
         type: String,
         required: [false, 'Please provide a password'], // Optional for OAuth users
     },
+    googleId: {
+        type: String,
+        required: false,
+    },
     image: {
         type: String,
     },

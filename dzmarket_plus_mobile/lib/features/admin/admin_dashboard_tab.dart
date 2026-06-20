@@ -232,11 +232,13 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
 
   Widget _buildFinancialRow() {
     final o = (_overview?['stats'] ?? _overview) as Map<String, dynamic>? ?? {};
+    final avgPrice = (o['averagePrice'] ?? 0) is num ? (o['averagePrice'] as num).toDouble() : 0.0;
+    final avgKDA = (avgPrice / 1000).toStringAsFixed(0);
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       children: [
-        _MiniStat(Icons.monetization_on_rounded, 'Prix moyen', '${o['averagePrice'] ?? 0} DA'),
+        _MiniStat(Icons.monetization_on_rounded, 'Prix moyen', '${avgKDA}k DA'),
         _MiniStat(Icons.trending_up_rounded, 'Croissance utilisateurs', '${o['usersGrowthPercent'] ?? 0}%'),
       ],
     );

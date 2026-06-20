@@ -15,26 +15,38 @@ class AdminUsersTab extends StatefulWidget {
 class _AdminUsersTabState extends State<AdminUsersTab> {
   List<dynamic> _users = [];
   bool _loading = true;
+  bool _loadingMore = false;
   String? _error;
   int _page = 1;
   bool _hasMore = true;
   final _searchCtrl = TextEditingController();
+  final _scrollCtrl = ScrollController();
   String _search = '';
 
   @override
   void initState() {
     super.initState();
+    _scrollCtrl.addListener(_onScroll);
     _loadUsers();
   }
 
   @override
   void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
 
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200 && _hasMore && !_loading && !_loadingMore) {
+      _page++;
+      _loadUsers(append: true);
+    }
+  }
+
   Future<void> _loadUsers({bool append = false}) async {
-    if (!append) setState(() { _loading = true; _error = null; });
+    if (append) { setState(() => _loadingMore = true); } else { setState(() { _loading = true; _error = null; }); }
     try {
       final data = await ApiService.getAdminUsers(page: _page, search: _search);
       final users = data['users'] ?? data['data'] ?? [];
@@ -44,10 +56,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           if (append) { _users.addAll(List.from(users)); } else { _users = List.from(users); }
           _hasMore = _users.length < total;
           _loading = false;
+          _loadingMore = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted) setState(() { _error = e.toString(); _loading = false; _loadingMore = false; });
     }
   }
 
@@ -141,6 +154,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     return RefreshIndicator(
       onRefresh: () async { _page = 1; await _loadUsers(); },
       child: ListView.builder(
+        controller: _scrollCtrl,
         itemCount: _users.length + (_hasMore ? 1 : 0),
         itemBuilder: (ctx, i) {
           if (i == _users.length) {

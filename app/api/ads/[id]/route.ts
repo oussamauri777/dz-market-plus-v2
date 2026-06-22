@@ -21,6 +21,9 @@ export async function GET(
             return new NextResponse('Ad not found', { status: 404 });
         }
 
+        const session = await getServerSession(authOptions);
+        const userId = session?.user?.id || getUserIdFromRequest(req);
+        const isLiked = userId ? (ad.likedBy?.some((uid: any) => uid.toString() === userId) ?? false) : false;
         const favoritesCount = await User.countDocuments({ favorites: id });
 
         return NextResponse.json({
@@ -32,6 +35,7 @@ export async function GET(
             },
             createdAt: ad.createdAt.toISOString(),
             favoritesCount,
+            isLiked,
         });
     } catch (error) {
         console.error('[AD_GET]', error);

@@ -43,20 +43,17 @@ export async function POST(req: Request) {
         // Initial filter to reduce candidate set size (using extracted category/filters)
         const filter: any = { status: 'active', embedding: { $exists: true } };
 
-        if (intent.category) {
-            // Fuzzy match category or use text search
-            filter.$text = { $search: intent.category };
-        }
-
         if (intent.minPrice || intent.maxPrice) {
             filter.price = {};
             if (intent.minPrice) filter.price.$gte = intent.minPrice;
             if (intent.maxPrice) filter.price.$lte = intent.maxPrice;
         }
 
-        // Fetch candidates with embeddings
-        // Limit to 100-200 candidates for re-ranking
-        const candidates = await Ad.find(filter).select('+embedding').limit(200).lean();
+        // Fetch candidates with embeddings (newest first, no hard limit)
+        const candidates = await Ad.find(filter)
+            .select('+embedding')
+            .sort({ createdAt: -1 })
+            .lean();
 
         // 4. Re-rank using Cosine Similarity
         const results = candidates.map((ad: any) => {

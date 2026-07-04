@@ -31,10 +31,13 @@ export default function Footer() {
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Contact</h3>
-                        <p className="text-gray-400 text-sm">
+                        <p className="text-gray-400 text-sm mb-4">
                             Email: support@dzmarket.plus<br />
                             Tél: +213 555 555 555
                         </p>
+                        <Link href="/privacy-policy" className="text-gray-400 hover:text-white text-sm transition-colors block">
+                            {t('privacyPolicy')}
+                        </Link>
                     </div>
                 </div>
                 <div className="mt-8 border-t border-gray-700 pt-8 text-center">

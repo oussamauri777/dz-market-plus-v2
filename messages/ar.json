@@ -16,7 +16,8 @@
     "register": "تسجيل",
     "postAd": "إضافة إعلان",
     "profile": "ملفي الشخصي",
-    "logout": "خروج"
+    "logout": "خروج",
+    "privacyPolicy": "سياسة الخصوصية"
   },
   "Common": {
     "loading": "جاري التحميل...",

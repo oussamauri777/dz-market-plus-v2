@@ -16,7 +16,8 @@
     "register": "S'inscrire",
     "postAd": "Déposer une annonce",
     "profile": "Mon Profil",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "privacyPolicy": "Politique de confidentialité"
   },
   "Common": {
     "loading": "Chargement...",

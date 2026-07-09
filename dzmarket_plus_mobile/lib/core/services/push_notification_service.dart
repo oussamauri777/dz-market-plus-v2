@@ -122,7 +122,10 @@ class PushNotificationService {
         if (adId != null) navigateToAd(adId);
       } else {
         final convId = data['conversationId'] as String?;
-        if (convId != null) navigateToConversation(convId);
+        if (convId != null) {
+          final senderName = data['senderName'] as String?;
+          navigateToConversation(convId, partner: senderName);
+        }
       }
     } catch (_) {}
   }

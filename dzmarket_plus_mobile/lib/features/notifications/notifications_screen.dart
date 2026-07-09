@@ -166,7 +166,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     if (!n.read) {
                       np.markAsRead([n.id]);
                     }
-                    if (n.type == 'new_message' && n.data != null) {
+                    if (n.type == 'review_received' && n.data != null) {
+                      final adId = n.data!['adId'] as String?;
+                      if (adId != null) navigateToAd(adId);
+                    } else if (n.type == 'new_message' && n.data != null) {
                       final convId = n.data!['conversationId'] as String?;
                       final partnerName = n.title;
                       if (convId != null) {

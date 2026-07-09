@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/models/ad.dart';
+import '../../core/providers/chat_provider.dart';
 import '../../core/services/api_service.dart';
 import '../../core/router/app_router.dart';
 import '../../shared/widgets/ad_card.dart';
@@ -85,6 +87,28 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> with SingleTi
     setState(() => _isLoadingMoreSellerAds = true);
     _sellerAdsPage++;
     await _fetchSellerAds();
+  }
+
+  Future<void> _startConversation(String userName) async {
+    if (_sellerAds.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.t('Profile.noAds'))),
+      );
+      return;
+    }
+    final adId = _sellerAds.first.id;
+    try {
+      final chat = Provider.of<ChatProvider>(context, listen: false);
+      final convId = await chat.getOrCreateConversation(adId, widget.userId);
+      if (!mounted) return;
+      navigateToConversation(convId, partner: userName);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${context.l10n.t('Common.error')}: $e')),
+      );
+    }
   }
 
   @override
@@ -478,7 +502,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> with SingleTi
                 Expanded(
                   child: AppButton(
                     label: context.l10n.t('Ads.contact'),
-                    onPressed: () => navigateToMessages(partner: userName),
+                    onPressed: () => _startConversation(userName),
                     icon: Icons.chat_bubble_rounded,
                   ),
                 ),

@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/models/ad.dart';
 import '../../core/services/api_service.dart';
+import '../../core/router/app_router.dart';
 import '../../shared/widgets/ad_card.dart';
 import '../../shared/widgets/app_badge.dart';
 import '../../shared/widgets/app_button.dart';
@@ -477,7 +478,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> with SingleTi
                 Expanded(
                   child: AppButton(
                     label: context.l10n.t('Ads.contact'),
-                    onPressed: () => context.push('/messages?partner=$userName'),
+                    onPressed: () => navigateToMessages(partner: userName),
                     icon: Icons.chat_bubble_rounded,
                   ),
                 ),

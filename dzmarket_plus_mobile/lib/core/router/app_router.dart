@@ -43,10 +43,21 @@ void navigateToConversation(String conversationId, {String? partner}) {
   }
 }
 
+void navigateToMessages({String? partner}) {
+  final context = _shellNavigatorKey.currentContext;
+  if (context != null && context.mounted) {
+    final uri = StringBuffer('/messages');
+    if (partner != null) {
+      uri.write('?partner=${Uri.encodeComponent(partner)}');
+    }
+    context.go(uri.toString());
+  }
+}
+
 void navigateToAd(String adId) {
   final context = _rootNavigatorKey.currentContext;
   if (context != null && context.mounted) {
-    context.go('/ads/$adId');
+    context.push('/ads/$adId');
   }
 }
 

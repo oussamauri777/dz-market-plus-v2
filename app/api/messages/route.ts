@@ -138,6 +138,7 @@ export async function POST(req: Request) {
                 data: {
                     conversationId: conversationId,
                     senderId: userId,
+                    senderName: senderName,
                     adTitle: (adDoc as any)?.title || '',
                 },
             });
@@ -154,6 +155,7 @@ export async function POST(req: Request) {
                     type: 'new_message',
                     conversationId: conversationId,
                     senderId: userId,
+                    senderName: senderName,
                 },
             });
         }

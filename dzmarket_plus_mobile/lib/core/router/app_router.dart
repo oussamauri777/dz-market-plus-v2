@@ -18,6 +18,7 @@ import '../../features/profile/notifications_settings_screen.dart';
 import '../../features/profile/help_support_screen.dart';
 import '../../features/profile/about_screen.dart';
 import '../../features/messages/messages_screen.dart';
+import '../models/ad.dart';
 import '../../features/favorites/favorites_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/admin/admin_screen.dart';
@@ -39,6 +40,13 @@ void navigateToConversation(String conversationId, {String? partner}) {
     context.go(uri.toString());
   } else {
     _pendingNotificationConversationId = conversationId;
+  }
+}
+
+void navigateToAd(String adId) {
+  final context = _rootNavigatorKey.currentContext;
+  if (context != null && context.mounted) {
+    context.go('/ads/$adId');
   }
 }
 
@@ -152,7 +160,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/create-ad',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const CreateAdScreen(),
+      builder: (context, state) => CreateAdScreen(ad: state.extra as Ad?),
     ),
     // Profile settings (no shell)
     GoRoute(

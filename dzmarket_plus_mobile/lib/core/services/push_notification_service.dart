@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../services/api_service.dart';
+import '../router/app_router.dart';
 
 class PushNotificationService {
   static final PushNotificationService _instance = PushNotificationService._();
@@ -69,11 +70,7 @@ class PushNotificationService {
       _handleNotificationTap(json.encode(message.data));
     });
 
-    // Handle terminated state (app opened from killed)
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _handleNotificationTap(json.encode(initialMessage.data));
-    }
+    // Handle terminated state (app opened from killed) — handled in main.dart
   }
 
   Future<void> _registerToken(String token) async {
@@ -116,6 +113,17 @@ class PushNotificationService {
   }
 
   static void _handleNotificationTap(String? payload) {
-    // Navigation handled by the callback registered in main.dart
+    if (payload == null || payload.isEmpty) return;
+    try {
+      final data = json.decode(payload);
+      final type = data['type'] as String?;
+      if (type == 'review_received') {
+        final adId = data['adId'] as String?;
+        if (adId != null) navigateToAd(adId);
+      } else {
+        final convId = data['conversationId'] as String?;
+        if (convId != null) navigateToConversation(convId);
+      }
+    } catch (_) {}
   }
 }

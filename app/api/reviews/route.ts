@@ -3,9 +3,11 @@ import dbConnect from "@/lib/db";
 import Review from "@/models/Review";
 import User from "@/models/User";
 import Ad from "@/models/Ad";
+import Notification from "@/models/Notification";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserIdFromRequest } from '@/lib/mobile-auth';
+import { sendPushToUser } from '@/lib/services/fcm';
 
 export async function POST(req: Request) {
     try {
@@ -53,6 +55,39 @@ export async function POST(req: Request) {
             seller: targetUserId,
             ad: adId,
         });
+
+        // Create notification for seller
+        try {
+            const buyer = await User.findById(userId).select('name').lean();
+            const ad = await Ad.findById(adId).select('title').lean();
+            const buyerName = (buyer as any)?.name || 'Someone';
+            const adTitle = (ad as any)?.title || '';
+
+            const starLabel = rating === 1 ? '1 étoile' : `${rating} étoiles`;
+            const body = `${buyerName} a laissé un avis de ${starLabel} sur votre annonce "${adTitle.substring(0, 60)}"`;
+
+            await Notification.create({
+                user: targetUserId,
+                type: 'review_received',
+                title: buyerName,
+                body,
+                data: {
+                    adId: adId,
+                    reviewerId: userId,
+                },
+            });
+
+            sendPushToUser(targetUserId, {
+                title: buyerName,
+                body,
+                data: {
+                    type: 'review_received',
+                    adId: adId,
+                },
+            });
+        } catch (notifError) {
+            console.error('[REVIEWS_POST] Notification error:', notifError);
+        }
 
         return NextResponse.json(review);
     } catch (error: any) {

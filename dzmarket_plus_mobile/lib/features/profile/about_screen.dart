@@ -39,11 +39,13 @@ class AboutScreen extends StatelessWidget {
             style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), height: 1.6)),
           const SizedBox(height: 32),
           _buildLinkTile(context, Icons.privacy_tip_outlined, context.l10n.t('About.privacyPolicy'), () {
-            launchUrl(Uri.parse('https://dz-market-plus-v2.vercel.app/fr/privacy'));
+            final locale = Localizations.localeOf(context).languageCode;
+            launchUrl(Uri.parse('https://dz-market-plus-v2.vercel.app/$locale/privacy-policy'));
           }),
           const Divider(),
           _buildLinkTile(context, Icons.description_outlined, context.l10n.t('About.termsOfService'), () {
-            launchUrl(Uri.parse('https://dz-market-plus-v2.vercel.app/fr/terms'));
+            final locale = Localizations.localeOf(context).languageCode;
+            launchUrl(Uri.parse('https://dz-market-plus-v2.vercel.app/$locale/terms'));
           }),
           const Divider(),
           _buildLinkTile(context, Icons.code_rounded, context.l10n.t('About.developer'), () {}),

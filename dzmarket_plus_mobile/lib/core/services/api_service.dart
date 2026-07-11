@@ -5,9 +5,40 @@ import '../config/app_config.dart';
 import '../models/ad.dart';
 
 class ApiService {
+  static String? _cachedToken;
+
+  /// Keep in-memory token in sync with AuthProvider (called on login/logout).
+  static void setCachedToken(String? token) {
+    _cachedToken = token;
+  }
+
   static Future<String?> _getToken() async {
+    // Use in-memory token first (avoids SharedPreferences race conditions).
+    if (_cachedToken != null) return _cachedToken;
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    final token = prefs.getString('auth_token');
+    // Validate JWT expiry on every read.
+    if (token != null && isTokenExpired(token)) {
+      await prefs.remove('auth_token');
+      return null;
+    }
+    return token;
+  }
+
+  /// Decode JWT payload (second segment) and check the `exp` claim.
+  static bool isTokenExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+      final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+      final data = json.decode(payload) as Map<String, dynamic>;
+      final exp = data['exp'] as int?;
+      if (exp == null) return false;
+      // `exp` is in seconds since epoch.
+      return DateTime.now().millisecondsSinceEpoch > exp * 1000;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<Map<String, String>> _authHeaders() async {
@@ -111,7 +142,8 @@ class ApiService {
 
   static Future<Ad> getAdById(String id) async {
     try {
-      final response = await http.get(Uri.parse('${AppConfig.baseUrl}/ads/$id'));
+      final headers = await _authHeaders();
+      final response = await http.get(Uri.parse('${AppConfig.baseUrl}/ads/$id'), headers: headers);
 
       if (response.statusCode == 200) {
         return _mapJsonToAd(json.decode(response.body));
@@ -121,6 +153,28 @@ class ApiService {
     } catch (e) {
       throw Exception('API Error: $e');
     }
+  }
+
+  static Future<void> incrementAdView(String adId) async {
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('${AppConfig.baseUrl}/ads/$adId/view'),
+        headers: headers,
+      );
+    } catch (_) {}
+  }
+
+  static Future<Map<String, dynamic>> toggleAdLike(String adId) async {
+    final headers = await _authHeaders();
+    final response = await http.post(
+      Uri.parse('${AppConfig.baseUrl}/ads/$adId/like'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Failed to toggle like');
   }
 
   static Future<Ad> createAd({
@@ -169,6 +223,69 @@ class ApiService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return _mapJsonToAd(json.decode(response.body));
+      } else if (response.statusCode == 401) {
+        final token = await _getToken();
+        if (token == null) {
+          throw Exception('Vous devez être connecté pour déposer une annonce. Connectez-vous ou créez un compte.');
+        }
+        throw Exception('Session expirée. Veuillez vous reconnecter.');
+      } else {
+        throw Exception(response.body);
+      }
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('Erreur lors de la création');
+    }
+  }
+
+  static Future<Ad> updateAd(String adId, {
+    required String title,
+    required String description,
+    required double price,
+    required String category,
+    required String subcategory,
+    required String wilaya,
+    required String commune,
+    required String condition,
+    required List<String> images,
+    double? latitude,
+    double? longitude,
+    bool isNegotiable = false,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+
+      final locationData = <String, dynamic>{
+        'wilaya': wilaya,
+        'commune': commune,
+      };
+
+      if (latitude != null && longitude != null) {
+        locationData['latitude'] = latitude;
+        locationData['longitude'] = longitude;
+      }
+
+      final response = await http.patch(
+        Uri.parse('${AppConfig.baseUrl}/ads/$adId'),
+        headers: headers,
+        body: json.encode({
+          'title': title,
+          'description': description,
+          'price': price,
+          'category': category,
+          'subcategory': subcategory,
+          'wilaya': wilaya,
+          'condition': condition,
+          'images': images,
+          'isNegotiable': isNegotiable,
+          'location': locationData,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return _mapJsonToAd(json.decode(response.body));
+      } else if (response.statusCode == 401) {
+        throw Exception('Session expirée. Veuillez vous reconnecter.');
       } else {
         throw Exception(response.body);
       }
@@ -221,6 +338,22 @@ class ApiService {
     } catch (e) {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
+  }
+
+  static Future<void> deleteMyAccount() async {
+    final headers = await _authHeaders();
+    final response = await http.post(
+      Uri.parse('${AppConfig.baseUrl}/auth/account'),
+      headers: headers,
+    );
+    if (response.statusCode == 200 || response.statusCode == 204) return;
+    if (response.body.isNotEmpty) {
+      try {
+        final err = json.decode(response.body);
+        throw Exception(err['error'] ?? 'Erreur (${response.statusCode})');
+      } catch (_) {}
+    }
+    throw Exception('Erreur ${response.statusCode}');
   }
 
   static Future<void> changePassword(String currentPassword, String newPassword) async {
@@ -521,6 +654,8 @@ class ApiService {
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
       status: json['status'] ?? 'active',
       viewCount: json['views'] ?? json['viewCount'] ?? 0,
+      likes: json['likes'] ?? 0,
+      isLiked: json['isLiked'] ?? false,
       isNegotiable: json['isNegotiable'] ?? false,
       commune: json['location'] is Map ? json['location']['commune'] : null,
       embedding: json['embedding'] != null ? List<double>.from(json['embedding']) : null,
@@ -599,13 +734,22 @@ class ApiService {
     if (response.statusCode != 200) throw Exception('Failed to update ad');
   }
 
-  static Future<void> deleteAd(String adId) async {
+  static Future<void> deleteAdminAd(String adId) async {
     final headers = await _authHeaders();
     final response = await http.delete(
       Uri.parse('${AppConfig.baseUrl}/admin/ads/$adId'),
       headers: headers,
     );
     if (response.statusCode != 200) throw Exception('Failed to delete ad');
+  }
+
+  static Future<void> deleteMyAd(String adId) async {
+    final headers = await _authHeaders();
+    final response = await http.delete(
+      Uri.parse('${AppConfig.baseUrl}/ads/$adId'),
+      headers: headers,
+    );
+    if (response.statusCode != 200) throw Exception('Échec de la suppression');
   }
 
   static Future<Map<String, dynamic>> getAdminReports({String status = ''}) async {
